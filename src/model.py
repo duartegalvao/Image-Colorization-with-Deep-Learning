@@ -1,16 +1,18 @@
 import numpy as np
 import tensorflow as tf
+import datetime
 
 class Model:
 
     def __init__(self):
 
-        self.learning_rate = 0.01
+        self.learning_rate = 0.001
         self.num_epochs = 200
         self.batch_size = 100
 
         self.compiled = False
 
+        self.save_interval = 50
 
     def _MLP(self, X):
 
@@ -36,42 +38,55 @@ class Model:
 
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.loss)
 
+        # Tensorboard.
+        tf.summary.scalar('loss', self.loss)
 
-    def train(self, X_train, Y_train):
+        self.saver = tf.train.Saver()
+
+    def train(self, X_train, Y_train, X_val, Y_val):
 
         if not self.compiled:
             print('Compile model first.')
             return
 
         (m, n_X) = X_train.shape
-        num_batch = int(m / self.batch_size)
+        num_batches = int(m / self.batch_size)
         
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
 
+            # Tensorboard.
+            merged = tf.summary.merge_all()
+            date = str(datetime.datetime.now()).replace(" ", "_")[:19]
+            train_writer = tf.summary.FileWriter('logs/' + date + '/train', sess.graph)
+            val_writer = tf.summary.FileWriter('logs/' + date + '/val')
+
             try:
                 for epoch in range(self.num_epochs):
-                    epoch_cost = 0.0
 
-                    for i in range(num_batch):
-                        start = i * self.batch_size
-                        end   = min(i * self.batch_size + self.batch_size, m)
+                    for b in range(num_batches):
+
+                        start = b * self.batch_size
+                        end   = min(b * self.batch_size + self.batch_size, m)
                         batch_x = X_train[start:end, :]
                         batch_y = Y_train[start:end, :]
 
-                        _, c = sess.run([self.optimizer, self.loss], feed_dict={self.X: batch_x, self.Y: batch_y})
+                        sess.run(self.optimizer, feed_dict={self.X: batch_x, self.Y: batch_y})
 
-                        epoch_cost += c / num_batch
+                    # Add training loss to log.
+                    summary = sess.run(merged, feed_dict={self.X: batch_x, self.Y: batch_y})
+                    train_writer.add_summary(summary, epoch)
 
-                    print('Epoch:', (epoch +1), 'cost =', epoch_cost)
+                    # Add validation loss to log.
+                    summary = sess.run(merged, feed_dict={self.X: X_val, self.Y: Y_val})
+                    val_writer.add_summary(summary, epoch)
 
-                    # Calculate error on validation set.
-                    #if isinstance(X_val, np.ndarray):
-                    #    cost = sess.run(mse, feed_dict={X: X_val})
-                    #    val_costs.append(cost)
+                    # Save model.
+                    if epoch % self.save_interval == 0:
+                        self.saver.save(sess, 'models/' + date + '/model', global_step=epoch)
 
             except KeyboardInterrupt:
-                print("\nInterrupted!")
+                print("\nInterrupted")
 
 
     """def evaluate(self, X, Y):
