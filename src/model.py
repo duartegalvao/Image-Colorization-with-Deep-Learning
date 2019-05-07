@@ -6,7 +6,7 @@ class Model:
     def __init__(self):
 
         self.learning_rate = 0.01
-        self.num_epochs = 30
+        self.num_epochs = 200
         self.batch_size = 100
 
         self.compiled = False
@@ -27,12 +27,12 @@ class Model:
             return
         self.compiled = True
 
-        X = tf.placeholder(tf.float32, shape=(None, 3072), name='X')
-        Y = tf.placeholder(tf.float32, shape=(None, 10), name='Y')
+        self.X = tf.placeholder(tf.float32, shape=(None, 3072), name='X')
+        self.Y = tf.placeholder(tf.float32, shape=(None, 10), name='Y')
 
-        logits = self._MLP(X)
+        logits = self._MLP(self.X)
 
-        self.loss = tf.nn.softmax_cross_entropy_with_logits_v2(Y, logits)
+        self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.Y, logits=logits))
 
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.loss)
 
@@ -45,19 +45,22 @@ class Model:
 
         (m, n_X) = X_train.shape
         num_batch = int(m / self.batch_size)
-
+        
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
 
             try:
                 for epoch in range(self.num_epochs):
+                    epoch_cost = 0.0
 
                     for i in range(num_batch):
                         start = i * self.batch_size
                         end   = min(i * self.batch_size + self.batch_size, m)
                         batch_x = X_train[start:end, :]
-                        batch_y = X_train[start:end, :]
-                        _, c = sess.run([self.optimizer, self.loss], feed_dict={X: batch_x, Y: batch_y})
+                        batch_y = Y_train[start:end, :]
+
+                        _, c = sess.run([self.optimizer, self.loss], feed_dict={self.X: batch_x, self.Y: batch_y})
+
                         epoch_cost += c / num_batch
 
                     print('Epoch:', (epoch +1), 'cost =', epoch_cost)
