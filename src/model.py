@@ -79,8 +79,9 @@ class Model:
                     end   = min(b * self.batch_size + self.batch_size, N)
                     batch_x = X_train[start:end,:,:,:]
 
+                    print('+++++++++')
                     _, l = self.sess.run([self.optimizer, self.loss], feed_dict={self.X_rgb: batch_x})
-
+                    print('---------')
 
                     epoch_loss += l / num_batches
 
