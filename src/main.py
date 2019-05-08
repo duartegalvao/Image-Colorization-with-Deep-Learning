@@ -7,7 +7,7 @@ from helpers import *
 
 SEED = 24
 
-X_train, Y_train, X_val, Y_val, X_test, Y_test = load_CIFAR(SEED)
+X_train, X_val, X_test = load_CIFAR(SEED)
 
 np.random.seed(SEED)
 tf.random.set_random_seed(SEED)
