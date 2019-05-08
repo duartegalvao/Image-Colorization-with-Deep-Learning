@@ -52,7 +52,7 @@ def load_batch(file_path):
     return X, Y, y
 
 
-def load_CIFAR():
+def load_CIFAR(seed):
     X, Y, _ = load_batch('data_batch_1')
 
     for i in range(4):
@@ -61,7 +61,7 @@ def load_CIFAR():
         X = np.vstack((X, data_X))
         Y = np.vstack((Y, data_Y))
     
-        
+    np.random.seed(seed)
     p = np.random.permutation(X.shape[0])
 
     X = X[p,:]
