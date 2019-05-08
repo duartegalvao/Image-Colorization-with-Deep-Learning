@@ -1,6 +1,8 @@
 import numpy as np
 from six.moves import cPickle as pickle
 import matplotlib.pyplot as plt
+from skimage import color
+
 
 def one_hot_encode(y, num_classes):
     """
@@ -77,3 +79,11 @@ def load_CIFAR(seed):
 
     return X_train, Y_train, X_val, Y_val, X_test, Y_test
 
+
+def split_luminosity_and_lab(rgb_images):
+    lab = color.rgb2lab(rgb_images)
+    lab_scaled = (lab + [-50., 0.5, 0.5]) / [50., 127.5, 127.5]
+
+    X = lab_scaled[:, :, :, 0]
+    Y = lab_scaled
+    return X, Y
