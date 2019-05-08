@@ -13,6 +13,8 @@ class Model:
         self.compiled = False
 
         self.save_interval = 50
+        self.save = False
+
 
     def _MLP(self, X):
 
@@ -63,6 +65,7 @@ class Model:
 
             try:
                 for epoch in range(self.num_epochs):
+                    epoch_loss = 0.0
 
                     for b in range(num_batches):
 
@@ -71,18 +74,24 @@ class Model:
                         batch_x = X_train[start:end, :]
                         batch_y = Y_train[start:end, :]
 
-                        sess.run(self.optimizer, feed_dict={self.X: batch_x, self.Y: batch_y})
+                        _, l = sess.run([self.optimizer, self.loss], feed_dict={self.X: batch_x, self.Y: batch_y})
 
-                    # Add training loss to log.
-                    summary = sess.run(merged, feed_dict={self.X: batch_x, self.Y: batch_y})
+                        epoch_loss += l / num_batches
+
+                    print('Epoch:', (epoch +1), 'loss =', epoch_loss)
+
+                    # Add training epoch loss to log.
+                    summary = tf.Summary()
+                    summary.value.add(tag='loss', simple_value=epoch_loss)
                     train_writer.add_summary(summary, epoch)
+                    train_writer.flush()
 
                     # Add validation loss to log.
                     summary = sess.run(merged, feed_dict={self.X: X_val, self.Y: Y_val})
                     val_writer.add_summary(summary, epoch)
 
                     # Save model.
-                    if epoch % self.save_interval == 0:
+                    if self.save and epoch % self.save_interval == 0:
                         self.saver.save(sess, 'models/' + date + '/model', global_step=epoch)
 
             except KeyboardInterrupt:

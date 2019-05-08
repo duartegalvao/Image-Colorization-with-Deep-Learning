@@ -1,5 +1,0 @@
-model_checkpoint_path: "model-150"
-all_model_checkpoint_paths: "model-0"
-all_model_checkpoint_paths: "model-50"
-all_model_checkpoint_paths: "model-100"
-all_model_checkpoint_paths: "model-150"
