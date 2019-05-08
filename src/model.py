@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 import datetime
 
-from models.MLP import MLP
+from models.UNet import UNet
 
 class Model:
 
@@ -34,15 +34,15 @@ class Model:
         self.compiled = True
 
         # Placeholders.
-        self.X = tf.placeholder(tf.float32, shape=(None, 3072), name='X')
-        self.Y = tf.placeholder(tf.float32, shape=(None, 10), name='Y')
+        self.X_rgb = tf.placeholder(tf.float32, shape=(None, None, None, 3), name='X_rgb')
+        self.X_gray = tf.placeholder(tf.float32, shape=(None, None, None, 1), name='X_gray')
 
         # Model.
-        mlp = MLP(self.X, self.seed)
-        logits = mlp.forward()
+        net = UNet(self.seed)
+        out = net.forward(self.X_rgb)
 
         # Loss and metrics.
-        self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.Y, logits=logits))
+        self.loss = tf.reduce_sum(tf.square(out - self.X_rgb))
 
         # Optimizer.
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.loss)
@@ -52,7 +52,7 @@ class Model:
 
         self.saver = tf.train.Saver()
 
-    def train(self, X_train, Y_train, X_val, Y_val):
+    def train(self, X_train, X_val):
 
         if not self.compiled:
             print('Compile model first.')
@@ -77,10 +77,10 @@ class Model:
 
                     start = b * self.batch_size
                     end   = min(b * self.batch_size + self.batch_size, N)
-                    batch_x = X_train[start:end, :]
-                    batch_y = Y_train[start:end, :]
+                    batch_x = X_train[start:end,:,:,:]
 
-                    _, l = self.sess.run([self.optimizer, self.loss], feed_dict={self.X: batch_x, self.Y: batch_y})
+                    _, l = self.sess.run([self.optimizer, self.loss], feed_dict={self.X_rgb: batch_x})
+
 
                     epoch_loss += l / num_batches
 
@@ -95,7 +95,7 @@ class Model:
                     train_writer.flush()
 
                     # Add validation loss to val log.
-                    summary = self.sess.run(merged, feed_dict={self.X: X_val, self.Y: Y_val})
+                    summary = self.sess.run(merged, feed_dict={self.X_rgb: X_val})
                     val_writer.add_summary(summary, epoch)
 
                 # Save model.
@@ -106,7 +106,7 @@ class Model:
             print("\nInterrupted")
 
 
-    def evaluate(self, X, Y):
+    """def evaluate(self, X, Y):
 
         if not self.compiled:
             print('Compile model first.')
@@ -124,3 +124,4 @@ class Model:
             return
 
         raise ValueError("Not defined.")
+    """

@@ -1,7 +1,7 @@
 import numpy as np
 from six.moves import cPickle as pickle
 import matplotlib.pyplot as plt
-from skimage import color
+#from skimage import color
 
 
 def one_hot_encode(y, num_classes):
@@ -39,7 +39,6 @@ def load_batch(file_path):
     with open(path, 'rb') as f:
         data = pickle.load(f, encoding='bytes')
         X = data[b'data']
-        y = data[b'labels']
 
         # Pre-process.
         X = X / 255
@@ -48,42 +47,40 @@ def load_batch(file_path):
         X -= mean_X
         X /= std_X
 
-        y = np.array(y)
-        Y = one_hot_encode(y, 10)
-
-    return X, Y, y
+    return X
 
 
 def load_CIFAR(seed):
-    X, Y, _ = load_batch('data_batch_1')
+    X = load_batch('data_batch_1')
 
     for i in range(4):
-        data_X, data_Y, _ = load_batch('data_batch_{0}'.format(i+2))
+        data_X = load_batch('data_batch_{0}'.format(i+2))
 
         X = np.vstack((X, data_X))
-        Y = np.vstack((Y, data_Y))
     
     np.random.seed(seed)
     p = np.random.permutation(X.shape[0])
 
     X = X[p,:]
-    Y = Y[p,:]
 
     X_train = X[5000:,:]
-    Y_train = Y[5000:,:]
 
     X_val = X[:5000,:]
-    Y_val = Y[:5000,:]
 
-    X_test, Y_test, _ = load_batch('test_batch')
+    X_test = load_batch('test_batch')
 
-    return X_train, Y_train, X_val, Y_val, X_test, Y_test
+    X_train = X_train.reshape((45000, 3, 32, 32)).transpose(0, 2, 3, 1)
+    X_val = X_val.reshape((5000, 3, 32, 32)).transpose(0, 2, 3, 1)
+    X_test = X_test.reshape((10000, 3, 32, 32)).transpose(0, 2, 3, 1)
+
+    return X_train, X_val, X_test
 
 
-def split_luminosity_and_lab(rgb_images):
+"""def split_luminosity_and_lab(rgb_images):
     lab = color.rgb2lab(rgb_images)
     lab_scaled = (lab + [-50., 0.5, 0.5]) / [50., 127.5, 127.5]
 
     X = lab_scaled[:, :, :, 0]
     Y = lab_scaled
     return X, Y
+"""
