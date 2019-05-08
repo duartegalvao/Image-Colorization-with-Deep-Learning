@@ -19,7 +19,7 @@ with tf.Session() as sess:
     
     MLP.compile()
     
-    MLP.train(X_train, Y_train, X_val, Y_val)
+    MLP.train(X_train, X_val)
     
     """print(MLP.evaluate(X_train, Y_train))
     print(MLP.evaluate(X_val, Y_val))
