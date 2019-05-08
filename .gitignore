@@ -105,3 +105,6 @@ venv.bak/
 
 # data
 src/data
+
+src/checkpoints
+src/logs
