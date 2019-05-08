@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import datetime
+import time
 
 from models.UNet import UNet
 
@@ -79,9 +80,15 @@ class Model:
                     end   = min(b * self.batch_size + self.batch_size, N)
                     batch_x = X_train[start:end,:,:,:]
 
-                    print('+++++++++')
+                    if b != 0:
+                        end = time.time()
+                        print('data load:{0}'.format(end-start))
+
+                    start = time.time()
                     _, l = self.sess.run([self.optimizer, self.loss], feed_dict={self.X_rgb: batch_x})
-                    print('---------')
+                    end = time.time()
+                    print('sess.run:{0}'.format(end-start))
+                    start = time.time()
 
                     epoch_loss += l / num_batches
 
