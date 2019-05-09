@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 from six.moves import cPickle as pickle
 import matplotlib.pyplot as plt
@@ -67,7 +69,12 @@ def save_lab_images(img_batch, filename="images/output_{}.png"):
         rgb = color.lab2rgb(lab_unscaled[i])
         io.imsave(filename.format(i), rgb)
 
-def save_gray_images(img_batch, filename="images/output_{}.png"):
 
+def save_gray_images(img_batch, filename="images/output_{}.png"):
     for i in range(img_batch.shape[0]):
-        io.imsave(filename.format(i), img_batch[i])
+        filename_i = filename.format(i)
+        directory = os.path.dirname(filename_i)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        io.imsave(filename_i, img_batch[i])
