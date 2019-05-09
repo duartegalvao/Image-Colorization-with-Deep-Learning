@@ -36,6 +36,9 @@ save_lab_images(Y_train[0:10,:,:,:], filename="images/train_before_color_{}.png"
 save_gray_images(X_val[0:10,:,:,:], filename="images/val_before_gray_{}.png")
 save_lab_images(Y_val[0:10,:,:,:], filename="images/val_before_color_{}.png")
 
+save_gray_images(X_test[0:10,:,:,:], filename="images/test_before_gray_{}.png")
+save_lab_images(Y_test[0:10,:,:,:], filename="images/test_before_color_{}.png")
+
 np.random.seed(SEED)
 tf.random.set_random_seed(SEED)
 
@@ -55,3 +58,7 @@ with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
     print('Predicting validation set...')
     pred = UNET.predict(X_val)
     save_lab_images(pred[0:10,:,:,:], filename="images/after_val_{}.png")
+
+    print('Predicting test set...')
+    pred = UNET.predict(X_test)
+    save_lab_images(pred[0:10,:,:,:], filename="images/after_test_{}.png")
