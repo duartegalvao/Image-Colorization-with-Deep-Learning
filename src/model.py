@@ -14,7 +14,7 @@ class Model:
         # Training settings.
         self.learning_rate = 0.001
         self.num_epochs = 200
-        self.batch_size = 100
+        self.batch_size = 128
 
         self.compiled = False
 
@@ -35,15 +35,15 @@ class Model:
         self.compiled = True
 
         # Placeholders.
-        self.X_rgb = tf.placeholder(tf.float32, shape=(None, 32, 32, 3), name='X_rgb')
-        self.X_gray = tf.placeholder(tf.float32, shape=(None, 32, 32, 1), name='X_gray')
+        self.X = tf.placeholder(tf.float32, shape=(None, 32, 32, 1), name='X')
+        self.Y = tf.placeholder(tf.float32, shape=(None, 32, 32, 3), name='Y')
 
         # Model.
         net = UNet(self.seed)
-        self.out = net.forward(self.X_rgb)
+        self.out = net.forward(self.X)
 
         # Loss and metrics.
-        self.loss = tf.reduce_sum(tf.square(self.out - self.X_rgb))
+        self.loss = tf.reduce_sum(tf.square(self.out - self.Y))
 
         # Optimizer.
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.loss)
@@ -53,7 +53,7 @@ class Model:
 
         self.saver = tf.train.Saver()
 
-    def train(self, X_train, X_val):
+    def train(self, X_train, Y_train, X_val, Y_val):
 
         if not self.compiled:
             print('Compile model first.')
@@ -68,7 +68,7 @@ class Model:
         merged = tf.summary.merge_all()
         date = str(datetime.datetime.now()).replace(" ", "_")[:19]
         train_writer = tf.summary.FileWriter('logs/' + date + '/train', self.sess.graph)
-        val_writer = tf.summary.FileWriter('logs/' + date + '/val')
+        val_writer = tf.summary.FileWriter('logs/' + date + '/val', self.sess.graph)
         train_writer.flush()
         val_writer.flush()
 
@@ -81,16 +81,9 @@ class Model:
                     start = b * self.batch_size
                     end   = min(b * self.batch_size + self.batch_size, N)
                     batch_x = X_train[start:end,:,:,:]
+                    batch_y = Y_train[start:end,:,:,:]
 
-                    #if b != 0:
-                    #    end_t_2 = timer()
-                    #    print('data load: {0}'.format(end_t_2 - start_t_2))
-
-                    #start_t = timer()
-                    _, l = self.sess.run([self.optimizer, self.loss], feed_dict={self.X_rgb: batch_x})
-                    #end_t = timer()
-                    #print('sess.run: {0}'.format(end_t - start_t))
-                    #start_t_2 = timer()
+                    _, l = self.sess.run([self.optimizer, self.loss], feed_dict={self.X: batch_x ,self.Y: batch_y})
 
                     epoch_loss += l / num_batches
 
@@ -105,9 +98,9 @@ class Model:
                     train_writer.flush()
 
                     # Add validation loss to val log.
-                    #summary = self.sess.run(merged, feed_dict={self.X_rgb: X_val})
-                    #val_writer.add_summary(summary, epoch)
-                    #val_writer.flush()
+                    summary = self.sess.run(merged,  feed_dict={self.X: X_val ,self.Y: Y_val})
+                    val_writer.add_summary(summary, epoch)
+                    val_writer.flush()
 
                 # Save model.
                 if self.save and epoch % self.save_interval == 0:
@@ -136,4 +129,4 @@ class Model:
             print('Compile model first.')
             return
 
-        return self.sess.run(self.out, feed_dict={self.X_rgb: X})
+        return self.sess.run(self.out, feed_dict={self.X: X})

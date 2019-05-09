@@ -3,25 +3,6 @@ from six.moves import cPickle as pickle
 import matplotlib.pyplot as plt
 from skimage import color, io
 
-
-def one_hot_encode(y, num_classes):
-    """
-        One-hot encoding.
-
-        Args:
-            - y : vector to encode.
-            - num_classes: number of classes.
-    """
-    N = y.shape[0]
-
-    encoded = np.zeros((N, num_classes))
-    
-    for i, label in enumerate(y):
-        encoded[i][label] = 1
-    
-    return encoded
-
-
 def load_batch(file_path):
     """
         Loads data given path to file.
@@ -85,3 +66,8 @@ def save_lab_images(img_batch, filename="images/output_{}.png"):
     for i in range(lab_unscaled.shape[0]):
         rgb = color.lab2rgb(lab_unscaled[i])
         io.imsave(filename.format(i), rgb)
+
+def save_gray_images(img_batch, filename="images/output_{}.png"):
+
+    for i in range(img_batch.shape[0]):
+        io.imsave(filename.format(i), img_batch[i])
