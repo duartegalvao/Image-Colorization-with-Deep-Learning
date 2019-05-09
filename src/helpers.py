@@ -1,7 +1,7 @@
 import numpy as np
 from six.moves import cPickle as pickle
 import matplotlib.pyplot as plt
-#from skimage import color
+from skimage import color
 
 
 def one_hot_encode(y, num_classes):
@@ -51,36 +51,37 @@ def load_batch(file_path):
 
 
 def load_CIFAR(seed):
-    X = load_batch('data_batch_1')
+    data = load_batch('data_batch_1')
 
     for i in range(4):
-        data_X = load_batch('data_batch_{0}'.format(i+2))
+        data_batch = load_batch('data_batch_{0}'.format(i+2))
 
-        X = np.vstack((X, data_X))
+        data = np.vstack((data, data_batch))
     
     np.random.seed(seed)
-    p = np.random.permutation(X.shape[0])
+    p = np.random.permutation(data.shape[0])
 
-    X = X[p,:]
+    data = data[p, :]
 
-    X_train = X[5000:,:]
+    data_train = data[5000:, :]
+    data_val = data[:5000, :]
+    data_test = load_batch('test_batch')
 
-    X_val = X[:5000,:]
+    data_train = data_train.reshape((45000, 3, 32, 32)).transpose(0, 2, 3, 1)
+    data_val = data_val.reshape((5000, 3, 32, 32)).transpose(0, 2, 3, 1)
+    data_test = data_test.reshape((10000, 3, 32, 32)).transpose(0, 2, 3, 1)
 
-    X_test = load_batch('test_batch')
+    X_train, Y_train = split_luminosity_and_lab(data_train)
+    X_val, Y_val = split_luminosity_and_lab(data_val)
+    X_test, Y_test = split_luminosity_and_lab(data_test)
 
-    X_train = X_train.reshape((45000, 3, 32, 32)).transpose(0, 2, 3, 1)
-    X_val = X_val.reshape((5000, 3, 32, 32)).transpose(0, 2, 3, 1)
-    X_test = X_test.reshape((10000, 3, 32, 32)).transpose(0, 2, 3, 1)
-
-    return X_train, X_val, X_test
+    return X_train, Y_train, X_val, Y_val, X_test, Y_test
 
 
-"""def split_luminosity_and_lab(rgb_images):
+def split_luminosity_and_lab(rgb_images):
     lab = color.rgb2lab(rgb_images)
     lab_scaled = (lab + [-50., 0.5, 0.5]) / [50., 127.5, 127.5]
 
-    X = lab_scaled[:, :, :, 0]
+    X = lab_scaled[:, :, :, 0:1]
     Y = lab_scaled
     return X, Y
-"""
