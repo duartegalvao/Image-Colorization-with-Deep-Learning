@@ -66,6 +66,12 @@ def save_lab_images(img_batch, filename="images/output_{}.png"):
     lab_unscaled = (img_batch * [50., 127.5, 127.5]) - [-50., 0.5, 0.5]
 
     for i in range(lab_unscaled.shape[0]):
+
+        filename_i = filename.format(i)
+        directory = os.path.dirname(filename_i)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+            
         rgb = color.lab2rgb(lab_unscaled[i])
         io.imsave(filename.format(i), rgb)
 

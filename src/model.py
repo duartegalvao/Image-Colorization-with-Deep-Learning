@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import tensorflow as tf
 import datetime
@@ -21,9 +22,9 @@ class Model:
         # Verbose/logs/checkpoints options.
         self.verbose = True
         self.log = True
-        self.save = False
-        self.save_interval = 10
-    
+        self.save = True
+        self.save_interval = 20
+
         self.sess = sess
         self.seed = seed
 
@@ -67,6 +68,10 @@ class Model:
         # Tensorboard.
         merged = tf.summary.merge_all()
         date = str(datetime.datetime.now()).replace(" ", "_")[:19]
+
+        if not os.path.exists('checkpoints/' + date):
+            os.makedirs('checkpoints/' + date)
+
         train_writer = tf.summary.FileWriter('logs/' + date + '/train', self.sess.graph)
         val_writer = tf.summary.FileWriter('logs/' + date + '/val', self.sess.graph)
         train_writer.flush()
@@ -88,7 +93,7 @@ class Model:
                     epoch_loss += l / num_batches
 
                 if self.verbose:
-                    print('Epoch:', (epoch +1), 'loss =', epoch_loss)
+                    print('Epoch:', (epoch+1), 'loss =', epoch_loss)
 
                 if self.log:
                     # Add training epoch loss to train log.
@@ -103,7 +108,7 @@ class Model:
                     val_writer.flush()
 
                 # Save model.
-                if self.save and epoch % self.save_interval == 0:
+                if self.save and (epoch+1) % self.save_interval == 0:
                     self.saver.save(self.sess, 'checkpoints/' + date + '/model', global_step=epoch)
 
         except KeyboardInterrupt:
