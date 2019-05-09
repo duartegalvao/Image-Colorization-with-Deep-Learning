@@ -1,7 +1,7 @@
 import numpy as np
 from six.moves import cPickle as pickle
 import matplotlib.pyplot as plt
-from skimage import color
+from skimage import color, io
 
 
 def one_hot_encode(y, num_classes):
@@ -77,3 +77,11 @@ def split_luminosity_and_lab(rgb_images):
     X = lab_scaled[:, :, :, 0:1]
     Y = lab_scaled
     return X, Y
+
+
+def save_lab_images(img_batch, filename="images/output_{}.png"):
+    lab_unscaled = (img_batch * [50., 127.5, 127.5]) - [-50., 0.5, 0.5]
+
+    for i in range(lab_unscaled.shape[0]):
+        rgb = color.lab2rgb(lab_unscaled[i])
+        io.imsave(filename.format(i), rgb)
