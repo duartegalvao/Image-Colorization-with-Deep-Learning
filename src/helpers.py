@@ -39,14 +39,6 @@ def load_batch(file_path):
     with open(path, 'rb') as f:
         data = pickle.load(f, encoding='bytes')
         X = data[b'data']
-
-        # Pre-process.
-        X = X / 255
-        mean_X = np.mean(X, axis=0)
-        std_X = np.std(X, axis=0)
-        X -= mean_X
-        X /= std_X
-
     return X
 
 
