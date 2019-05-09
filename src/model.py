@@ -36,7 +36,7 @@ class Model:
 
         # Placeholders.
         self.X = tf.placeholder(tf.float32, shape=(None, 32, 32, 1), name='X')
-        self.Y = tf.placeholder(tf.float32, shape=(None, 32, 32, 3), name='Y')
+        self.Y = tf.placeholder(tf.float32, shape=(None, 32, 32, 2), name='Y')
 
         # Model.
         net = UNet(self.seed)

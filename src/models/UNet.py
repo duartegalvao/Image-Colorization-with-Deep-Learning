@@ -83,7 +83,7 @@ class UNet:
 
             output = tf.layers.Conv2D(
                                 name='dec_conv_' + str(i+3),
-                                filters=3,
+                                filters=2,
                                 strides=1,
                                 kernel_size=1,
                                 padding='same',

@@ -49,16 +49,19 @@ with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
     UNET.compile()
     
     print('Training...')
-    UNET.train(X_train, Y_train, X_val, Y_val)
+    UNET.train(X_train, Y_train[:,:,:,1:3], X_val, Y_val[:,:,:,1:3])
 
     print('Predicting training set...')
     pred = UNET.predict(X_train)
+    pred = np.concatenate([X_train,pred], axis=3)
     save_lab_images(pred[0:10,:,:,:], filename="images/after_train_{}.png")
 
     print('Predicting validation set...')
     pred = UNET.predict(X_val)
+    pred = np.concatenate([X_val,pred], axis=3)
     save_lab_images(pred[0:10,:,:,:], filename="images/after_val_{}.png")
 
     print('Predicting test set...')
     pred = UNET.predict(X_test)
+    pred = np.concatenate([X_test,pred], axis=3)
     save_lab_images(pred[0:10,:,:,:], filename="images/after_test_{}.png")
