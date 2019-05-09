@@ -7,19 +7,27 @@ from helpers import *
 
 SEED = 24
 
-X_train, X_val, X_test = load_CIFAR(SEED)
+X_train, X_val, _ = load_CIFAR(SEED)
+
+X_train = X_train[0:1000,:,:,:]
+X_val = X_val[0:50,:,:,:]
+
+print(X_train.shape)
+print(X_val.shape)
 
 np.random.seed(SEED)
 tf.random.set_random_seed(SEED)
 
 
-with tf.Session() as sess:
+with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
     
-    MLP = Model(sess, SEED)
+    UNET = Model(sess, SEED)
     
-    MLP.compile()
+    UNET.compile()
     
-    MLP.train(X_train, X_val)
+    UNET.train(X_train, X_val)
+
+    UNET.predict(X_train)
     
     """print(MLP.evaluate(X_train, Y_train))
     print(MLP.evaluate(X_val, Y_val))
