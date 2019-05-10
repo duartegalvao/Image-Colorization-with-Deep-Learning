@@ -13,7 +13,7 @@ class Model:
         # TODO: put these parameters as arguments or something.
 
         # Training settings.
-        self.learning_rate = 0.001
+        self.learning_rate = 0.0003
         self.num_epochs = 200
         self.batch_size = 128
         self.shuffle = False
@@ -25,6 +25,10 @@ class Model:
         self.log = True
         self.save = True
         self.save_interval = 20
+
+        # GAN parameters.
+        self.label_smoothing = 0.9
+        self.l1_weight = 100.0
 
         self.sess = sess
         self.seed = seed
@@ -43,42 +47,37 @@ class Model:
         self.X = tf.placeholder(tf.float32, shape=(None, 32, 32, 1), name='X')
         self.Y = tf.placeholder(tf.float32, shape=(None, 32, 32, 2), name='Y')
 
-        self.labels = tf.placeholder(tf.float32, shape=(None, 1), name='labels')
-
         # Generator.
         generator = Generator(self.seed)
-        gen_out = generator.forward(self.X)
 
         # Discriminator.
         discriminator = Discriminator(self.seed)
 
-        disc_out_fake = discriminator.forward(tf.concat([self.X, gen_out], 3))
-        disc_out_real = discriminator.forward(tf.concat([self.X, self.Y], 3), reuse_vars=True)
+        self.gen_out = generator.forward(self.X)
+        disc_out_real = discriminator.forward(tf.concat([self.X, self.Y], 3))
+        disc_out_fake = discriminator.forward(tf.concat([self.X, self.gen_out], 3), reuse_vars=True)
 
         # Generator loss.
-        # TODO: add l1 loss.
-        self.gen_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=disc_out_fake, labels=tf.ones_like(disc_out_fake)))
+        gen_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=disc_out_fake, labels=tf.ones_like(disc_out_fake)))
+        gen_loss_l1 = tf.reduce_mean(tf.abs(self.Y - self.gen_out)) * self.l1_weight
+        self.gen_loss = gen_loss + gen_loss_l1
 
-        # Discriminator loss.
-        self.disc_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=disc_out_fake, labels=tf.zeros_like(disc_out_fake)))
+        # Discriminator losses.
+        disc_l_fake = tf.nn.sigmoid_cross_entropy_with_logits(logits=disc_out_fake, labels=tf.zeros_like(disc_out_fake))
+        disc_l_real = tf.nn.sigmoid_cross_entropy_with_logits(logits=disc_out_real, labels=tf.ones_like(disc_out_real)*self.label_smoothing)
+        self.disc_loss_fake = tf.reduce_mean(disc_l_fake)
+        self.disc_loss_real = tf.reduce_mean(disc_l_real)
+        self.disc_loss = tf.reduce_mean(disc_l_fake + disc_l_real)
 
-        # TODO: smoothing
-        self.disc_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=disc_out_real, labels=tf.ones_like(disc_out_real)))
-
-        self.disc_loss = tf.reduce_mean(self.disc_loss_fake + self.disc_loss_real)
-
-        # Optimizer.
-        self.gen_optimizer = tf.train.AdamOptimizer(
-                                        learning_rate=self.learning_rate
-                                    ).minimize(self.gen_loss, var_list=generator.variables)
-
-        self.disc_optimizer = tf.train.AdamOptimizer(
-                                        learning_rate=self.learning_rate
-                                    ).minimize(self.disc_loss, var_list=discriminator.variables)
+        # Optimizers.
+        self.gen_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.gen_loss, var_list=generator.variables)
+        self.disc_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate/10).minimize(self.disc_loss, var_list=discriminator.variables)
         
         # Tensorboard.
         tf.summary.scalar('gen_loss', self.gen_loss)
         tf.summary.scalar('disc_loss', self.disc_loss)
+        tf.summary.scalar('disc_loss_real', self.disc_loss_real)
+        tf.summary.scalar('disc_loss_fake', self.disc_loss_fake)
 
         self.saver = tf.train.Saver()
 
@@ -123,10 +122,10 @@ class Model:
                     batch_x = X_train[start:end,:,:,:]
                     batch_y = Y_train[start:end,:,:,:]
 
-                    _, l_disc = self.sess.run([self.disc_optimizer, self.disc_loss], feed_dict={self.X: batch_x ,self.Y: batch_y})
+                    _, l_disc = self.sess.run([self.disc_optimizer, self.disc_loss], feed_dict={self.X: batch_x, self.Y: batch_y})
 
-                    _, l_gen = self.sess.run([self.gen_optimizer, self.gen_loss], feed_dict={self.X: batch_x})
-                    _, l_gen = self.sess.run([self.gen_optimizer, self.gen_loss], feed_dict={self.X: batch_x})
+                    _, l_gen = self.sess.run([self.gen_optimizer, self.gen_loss], feed_dict={self.X: batch_x, self.Y: batch_y})
+                    _, l_gen = self.sess.run([self.gen_optimizer, self.gen_loss], feed_dict={self.X: batch_x, self.Y: batch_y})
 
                     epoch_gen_loss += l_gen / num_batches
                     epoch_disc_loss += l_disc / num_batches
@@ -169,4 +168,4 @@ class Model:
             print('Compile model first.')
             return
 
-        return self.sess.run(self.out, feed_dict={self.X: X})
+        return self.sess.run(self.gen_out, feed_dict={self.X: X})
