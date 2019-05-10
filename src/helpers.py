@@ -2,7 +2,6 @@ import os
 
 import numpy as np
 from six.moves import cPickle as pickle
-import matplotlib.pyplot as plt
 from skimage import color, io
 
 def load_batch(file_path):
