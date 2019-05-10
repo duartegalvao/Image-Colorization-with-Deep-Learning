@@ -44,7 +44,8 @@ class Model:
         self.out = net.forward(self.X)
 
         # Loss and metrics.
-        self.loss = tf.reduce_sum(tf.square(self.out - self.Y))
+        self.loss = tf.keras.losses.MeanSquaredError()(self.Y, self.out)
+        #self.loss = tf.reduce_sum(tf.square(self.out - self.Y))
 
         # Optimizer.
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.loss)
@@ -73,7 +74,7 @@ class Model:
             os.makedirs('checkpoints/' + date)
 
         train_writer = tf.summary.FileWriter('logs/' + date + '/train', self.sess.graph)
-        val_writer = tf.summary.FileWriter('logs/' + date + '/val', self.sess.graph)
+        val_writer = tf.summary.FileWriter('logs/' + date + '/val')
         train_writer.flush()
         val_writer.flush()
 
