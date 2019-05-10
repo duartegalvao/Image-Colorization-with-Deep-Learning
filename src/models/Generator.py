@@ -1,10 +1,9 @@
 import tensorflow as tf
 
-class UNet:
+class Generator:
 
     def __init__(self, seed):
         self.seed = seed
-        self.initializer = tf.glorot_uniform_initializer(self.seed)
 
         self.kernel_size = 4
 
@@ -25,7 +24,8 @@ class UNet:
 
     def forward(self, X):
 
-        with tf.variable_scope('UNet'):
+        with tf.variable_scope('Generator', reuse=None):
+            self.initializer = tf.glorot_uniform_initializer(self.seed)
 
             layers = []
 

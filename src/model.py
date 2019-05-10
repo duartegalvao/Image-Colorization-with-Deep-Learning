@@ -3,7 +3,8 @@ import numpy as np
 import tensorflow as tf
 import datetime
 
-from models.UNet import UNet
+from models.Generator import Generator
+from models.Discriminator import Discriminator
 
 class Model:
 
@@ -42,13 +43,17 @@ class Model:
         self.X = tf.placeholder(tf.float32, shape=(None, 32, 32, 1), name='X')
         self.Y = tf.placeholder(tf.float32, shape=(None, 32, 32, 2), name='Y')
 
+        self.labels = tf.placeholder(tf.float32, shape=(None, 1), name='labels')
+
         # Model.
-        net = UNet(self.seed)
-        self.out = net.forward(self.X)
+        gen = Generator(self.seed)
+        gen_out = gen.forward(self.X)
+
+        disc = Discriminator(self.seed)
+        disc_out = disc.forward(gen_out)
 
         # Loss and metrics.
-        self.loss = tf.keras.losses.MeanSquaredError()(self.Y, self.out)
-        #self.loss = tf.reduce_sum(tf.square(self.out - self.Y))
+        self.loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=disc_out, labels=self.labels)
 
         # Optimizer.
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.loss)
