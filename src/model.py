@@ -16,7 +16,7 @@ class Model:
         self.learning_rate = 0.001
         self.num_epochs = 200
         self.batch_size = 128
-        self.shuffle = True
+        self.shuffle = False
 
         self.compiled = False
 
@@ -45,21 +45,40 @@ class Model:
 
         self.labels = tf.placeholder(tf.float32, shape=(None, 1), name='labels')
 
-        # Model.
-        gen = Generator(self.seed)
-        gen_out = gen.forward(self.X)
+        # Generator.
+        generator = Generator(self.seed)
+        gen_out = generator.forward(self.X)
 
-        disc = Discriminator(self.seed)
-        disc_out = disc.forward(gen_out)
+        # Discriminator.
+        discriminator = Discriminator(self.seed)
 
-        # Loss and metrics.
-        self.loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=disc_out, labels=self.labels)
+        disc_out_fake = discriminator.forward(tf.concat([self.X, gen_out], 3))
+        disc_out_real = discriminator.forward(tf.concat([self.X, self.Y], 3), reuse_vars=True)
+
+        # Generator loss.
+        # TODO: add l1 loss.
+        self.gen_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=disc_out_fake, labels=tf.ones_like(disc_out_fake)))
+
+        # Discriminator loss.
+        self.disc_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=disc_out_fake, labels=tf.zeros_like(disc_out_fake)))
+
+        # TODO: smoothing
+        self.disc_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=disc_out_real, labels=tf.ones_like(disc_out_real)))
+
+        self.disc_loss = tf.reduce_mean(self.disc_loss_fake + self.disc_loss_real)
 
         # Optimizer.
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.loss)
+        self.gen_optimizer = tf.train.AdamOptimizer(
+                                        learning_rate=self.learning_rate
+                                    ).minimize(self.gen_loss, var_list=generator.variables)
 
+        self.disc_optimizer = tf.train.AdamOptimizer(
+                                        learning_rate=self.learning_rate
+                                    ).minimize(self.disc_loss, var_list=discriminator.variables)
+        
         # Tensorboard.
-        tf.summary.scalar('loss', self.loss)
+        tf.summary.scalar('gen_loss', self.gen_loss)
+        tf.summary.scalar('disc_loss', self.disc_loss)
 
         self.saver = tf.train.Saver()
 
@@ -89,7 +108,8 @@ class Model:
 
         try:
             for epoch in range(self.num_epochs):
-                epoch_loss = 0.0
+                epoch_gen_loss = 0.0
+                epoch_disc_loss = 0.0
 
                 if self.shuffle:
                     p = np.random.permutation(X_train.shape[0])
@@ -103,22 +123,28 @@ class Model:
                     batch_x = X_train[start:end,:,:,:]
                     batch_y = Y_train[start:end,:,:,:]
 
-                    _, l = self.sess.run([self.optimizer, self.loss], feed_dict={self.X: batch_x ,self.Y: batch_y})
+                    _, l_disc = self.sess.run([self.disc_optimizer, self.disc_loss], feed_dict={self.X: batch_x ,self.Y: batch_y})
 
-                    epoch_loss += l / num_batches
+                    _, l_gen = self.sess.run([self.gen_optimizer, self.gen_loss], feed_dict={self.X: batch_x})
+                    _, l_gen = self.sess.run([self.gen_optimizer, self.gen_loss], feed_dict={self.X: batch_x})
+
+                    epoch_gen_loss += l_gen / num_batches
+                    epoch_disc_loss += l_disc / num_batches
 
                 if self.verbose:
-                    print('Epoch:', (epoch+1), 'loss =', epoch_loss)
+                    print('Epoch:', (epoch+1), 'gen_loss =', epoch_gen_loss)
+                    print('Epoch:', (epoch+1), 'disc_loss =', epoch_disc_loss)
 
                 if self.log:
                     # Add training epoch loss to train log.
                     summary = tf.Summary()
-                    summary.value.add(tag='loss', simple_value=epoch_loss)
+                    summary.value.add(tag='gen_loss', simple_value=epoch_gen_loss)
+                    summary.value.add(tag='disc_loss', simple_value=epoch_disc_loss)
                     train_writer.add_summary(summary, epoch)
                     train_writer.flush()
 
                     # Add validation loss to val log.
-                    summary = self.sess.run(merged,  feed_dict={self.X: X_val ,self.Y: Y_val})
+                    summary = self.sess.run(merged, feed_dict={self.X: X_val ,self.Y: Y_val})
                     val_writer.add_summary(summary, epoch)
                     val_writer.flush()
 

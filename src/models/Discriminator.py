@@ -4,6 +4,8 @@ class Discriminator:
 
     def __init__(self, seed):
         self.seed = seed
+        self.name = 'Discriminator'
+
         self.initializer = tf.glorot_uniform_initializer(self.seed)
 
         self.kernel_size = 4
@@ -15,9 +17,11 @@ class Discriminator:
             (512, 1, 0),    # [batch, 4, 4, 256] => [batch, 4, 4, 512]
         ]
 
-    def forward(self, X):
+        self.variables = []
 
-        with tf.variable_scope('Discriminator',reuse=None):
+    def forward(self, X, reuse_vars=None):
+
+        with tf.variable_scope(self.name, reuse=reuse_vars):
 
             output = tf.layers.Conv2D(
                                 name='conv_1',
@@ -56,6 +60,8 @@ class Discriminator:
                                 units=1,
                                 activation=None,
                                 kernel_initializer=self.initializer)(output)
+
+            self.variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, self.name)
 
         return output
 

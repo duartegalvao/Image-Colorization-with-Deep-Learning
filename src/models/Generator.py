@@ -4,6 +4,9 @@ class Generator:
 
     def __init__(self, seed):
         self.seed = seed
+        self.name = 'Generator'
+
+        self.initializer = tf.glorot_uniform_initializer(self.seed)
 
         self.kernel_size = 4
 
@@ -22,10 +25,11 @@ class Generator:
             (64, 2, 0),     # [batch, 16, 16, 128] => [batch, 32, 32, 64]
         ]
 
+        self.variables = []
+
     def forward(self, X):
 
-        with tf.variable_scope('Generator', reuse=None):
-            self.initializer = tf.glorot_uniform_initializer(self.seed)
+        with tf.variable_scope(self.name, reuse=None):
 
             layers = []
 
@@ -89,6 +93,8 @@ class Generator:
                                 padding='same',
                                 activation=tf.nn.tanh,
                                 kernel_initializer=self.initializer)(output)
+
+            self.variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, self.name)
             
         return output
 
