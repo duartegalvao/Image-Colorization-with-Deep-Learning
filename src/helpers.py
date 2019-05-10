@@ -21,7 +21,7 @@ def _load_batch(file_path):
             - Y: One hot encoding.
             - y: labels.
     """
-    with open(DATA_PATH / file_path, 'rb') as f:
+    with open(str(DATA_PATH / file_path), 'rb') as f:
         data = pickle.load(f, encoding='bytes')
         X = data[b'data']
     return X
