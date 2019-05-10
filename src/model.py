@@ -2,6 +2,7 @@ import os
 import numpy as np
 import tensorflow as tf
 import datetime
+import tqdm
 
 from models.UNet import UNet
 
@@ -42,13 +43,17 @@ class Model:
         self.X = tf.placeholder(tf.float32, shape=(None, 32, 32, 1), name='X')
         self.Y = tf.placeholder(tf.float32, shape=(None, 32, 32, 2), name='Y')
 
+        # Setup training.
+        train_dataset = tf.data.Dataset.from_tensor_slices((self.X, self.Y)).batch(self.batch_size)
+        self.iterator = train_dataset.make_initializable_iterator()
+        X, Y = self.iterator.get_next()
+
         # Model.
         net = UNet(self.seed)
-        self.out = net.forward(self.X)
+        self.out = net.forward(X)
 
         # Loss and metrics.
-        self.loss = tf.keras.losses.MeanSquaredError()(self.Y, self.out)
-        #self.loss = tf.reduce_sum(tf.square(self.out - self.Y))
+        self.loss = tf.keras.losses.MeanSquaredError()(Y, self.out)
 
         # Optimizer.
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.loss)
@@ -68,8 +73,6 @@ class Model:
         N = X_train.shape[0]
         num_batches = int(N / self.batch_size)
         
-        self.sess.run(tf.global_variables_initializer())
-
         # Tensorboard.
         merged = tf.summary.merge_all()
         date = str(datetime.datetime.now()).replace(" ", "_")[:19]
@@ -82,25 +85,52 @@ class Model:
         train_writer.flush()
         val_writer.flush()
 
+        self.sess.run(tf.global_variables_initializer())
+
+        #dataset = tf.data.Dataset.from_tensor_slices((self.X, self.Y))
+        #iter = dataset.make_initializable_iterator()
+        #self.optimizer, self.loss = iter.get_next()
+
+        #sess.run(iter.initializer, feed_dict={self.X: X_train, self.Y: Y_train})
+
+        #dataset = dataset.shuffle(buffer_size=buffer_size)
+        #dataset = dataset.batch(batch_size)
+        #dataset = dataset.repeat(n_epochs)
+        #iter = dataset.make_initializable_iterator()
+
+        #train_dataset = tf.data.Dataset.zip((dx_train, dy_train)).shuffle(500).repeat().batch(30)
+
+
         try:
             for epoch in range(self.num_epochs):
                 epoch_loss = 0.0
 
-                if self.shuffle:
-                    p = np.random.permutation(X_train.shape[0])
-                    X_train = X_train[p,:,:,:]
-                    Y_train = Y_train[p,:,:,:]
+                self.sess.run(self.iterator.initializer, feed_dict={self.X: X_train, self.Y: Y_train})
 
-                for b in range(num_batches):
+                #if self.shuffle:
+                #    p = np.random.permutation(X_train.shape[0])
+                #    X_train = X_train[p,:,:,:]
+                #    Y_train = Y_train[p,:,:,:]
 
-                    start = b * self.batch_size
-                    end   = min(b * self.batch_size + self.batch_size, N)
-                    batch_x = X_train[start:end,:,:,:]
-                    batch_y = Y_train[start:end,:,:,:]
-
-                    _, l = self.sess.run([self.optimizer, self.loss], feed_dict={self.X: batch_x ,self.Y: batch_y})
-
+                for _ in tqdm(range(num_batches)):
+                    _, l = self.sess.run([self.optimizer, self.loss])
                     epoch_loss += l / num_batches
+
+                #with tqdm(total = X_train.shape[0]) as pbar:
+                #    while True:
+                       
+                #        pbar.update(self.batch_size)
+
+                #for b in range(num_batches):
+                #
+                #    start = b * self.batch_size
+                #    end   = min(b * self.batch_size + self.batch_size, N)
+                #    batch_x = X_train[start:end,:,:,:]
+                #    batch_y = Y_train[start:end,:,:,:]
+                #
+                #    _, l = self.sess.run([self.optimizer, self.loss], feed_dict={self.X: batch_x ,self.Y: batch_y})
+                #
+                #    epoch_loss += l / num_batches
 
                 if self.verbose:
                     print('Epoch:', (epoch+1), 'loss =', epoch_loss)
