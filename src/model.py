@@ -15,6 +15,7 @@ class Model:
         self.learning_rate = 0.001
         self.num_epochs = 200
         self.batch_size = 128
+        self.shuffle = True
 
         self.compiled = False
 
@@ -26,6 +27,8 @@ class Model:
 
         self.sess = sess
         self.seed = seed
+
+        np.random.seed(self.seed * 2)
 
 
     def compile(self):
@@ -82,6 +85,11 @@ class Model:
         try:
             for epoch in range(self.num_epochs):
                 epoch_loss = 0.0
+
+                if self.shuffle:
+                    p = np.random.permutation(X_train.shape[0])
+                    X_train = X_train[p,:,:,:]
+                    Y_train = Y_train[p,:,:,:]
 
                 for b in range(num_batches):
 
