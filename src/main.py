@@ -54,6 +54,11 @@ with tf.Session() as sess:
     print('Training...')
     UNET.train(X_train, Y_train[:,:,:,1:3], X_val, Y_val[:,:,:,1:3])
 
+    # Loading model.
+    #print('Loading model...')
+    #load_path = 'checkpoints/2019-05-09_17:54:38/'
+    #UNET.load(load_path)
+
     print('Predicting training set...')
     X_train = X_train[0:20,:,:,:]
     pred = UNET.predict(X_train)

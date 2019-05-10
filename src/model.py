@@ -2,7 +2,6 @@ import os
 import numpy as np
 import tensorflow as tf
 import datetime
-from timeit import default_timer as timer
 
 from models.UNet import UNet
 
@@ -27,6 +26,7 @@ class Model:
 
         self.sess = sess
         self.seed = seed
+
 
     def compile(self):
 
@@ -54,6 +54,7 @@ class Model:
         tf.summary.scalar('loss', self.loss)
 
         self.saver = tf.train.Saver()
+
 
     def train(self, X_train, Y_train, X_val, Y_val):
 
@@ -110,24 +111,18 @@ class Model:
 
                 # Save model.
                 if self.save and (epoch+1) % self.save_interval == 0:
-                    self.saver.save(self.sess, 'checkpoints/' + date + '/model', global_step=epoch)
+                    self.saver.save(self.sess, 'checkpoints/' + date + '/model', global_step=epoch, write_meta_graph=False)
 
         except KeyboardInterrupt:
             print("\nInterrupted")
 
 
-    """def evaluate(self, X, Y):
+    def load(self, path):
+        ckpt = tf.train.get_checkpoint_state(path)
+        ckpt_name = os.path.basename(ckpt.model_checkpoint_path)
+        print('Loading model from path: {0}'.format(os.path.join(path, ckpt_name)))
+        self.saver.restore(self.sess, os.path.join(path, ckpt_name))
 
-        if not self.compiled:
-            print('Compile model first.')
-            return
-
-        loss = self.sess.run(self.loss, feed_dict={self.X: X, self.Y: Y})
-
-        return loss
-
-
-    """
 
     def predict(self, X):
 
