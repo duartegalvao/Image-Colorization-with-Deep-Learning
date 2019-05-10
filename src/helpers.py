@@ -53,6 +53,32 @@ def _save_preprocd_CIFAR(cifar, seed):
              Y_test=Y_test)
 
 
+def _split_luminosity_and_lab(rgb_images):
+    lab = color.rgb2lab(rgb_images)
+    lab_scaled = (lab + [-50., 0.5, 0.5]) / [50., 127.5, 127.5]
+
+    X = lab_scaled[:, :, :, 0:1]
+    Y = lab_scaled
+    return X, Y
+
+
+def _calculate_hue(rgb_images):
+    hues = np.zeros(rgb_images.shape[0])
+    for i in range(rgb_images.shape[0]):
+        hues[i] = np.mean(color.rgb2hsv(rgb_images[i])[:,:,0])
+    return hues
+
+
+def _split_data_evenly(data, hue, ratio=0.1):
+    inv_ratio = np.round(1./ratio).astype(np.int)
+    hue_order_idx = np.argsort(hue)
+    data_sorted = data[hue_order_idx,:,:,:]
+    val_samples_idx = np.arange(0, data_sorted.shape[0], inv_ratio)
+    data_train = np.delete(data_sorted, val_samples_idx, axis=0)
+    data_val = data_sorted[val_samples_idx,:,:,:]
+    return data_train, data_val
+
+
 def _preproc_CIFAR(seed):
     data = _load_batch('data_batch_1')
 
@@ -66,23 +92,23 @@ def _preproc_CIFAR(seed):
 
     data = data[p, :]
 
-    data_train = data[5000:, :]
-    data_val = data[:5000, :]
     data_test = _load_batch('test_batch')
 
-    data_train = data_train.reshape((45000, 3, 32, 32)).transpose(0, 2, 3, 1)
-    data_val = data_val.reshape((5000, 3, 32, 32)).transpose(0, 2, 3, 1)
+    data = data.reshape((data.shape[0], 3, 32, 32)).transpose(0, 2, 3, 1)
     data_test = data_test.reshape((10000, 3, 32, 32)).transpose(0, 2, 3, 1)
 
-    X_train, Y_train = split_luminosity_and_lab(data_train)
-    X_val, Y_val = split_luminosity_and_lab(data_val)
-    X_test, Y_test = split_luminosity_and_lab(data_test)
+    hue = _calculate_hue(data)
+    data_train, data_val = _split_data_evenly(data, hue)
+
+    X_train, Y_train = _split_luminosity_and_lab(data_train)
+    X_val, Y_val = _split_luminosity_and_lab(data_val)
+    X_test, Y_test = _split_luminosity_and_lab(data_test)
 
     return X_train, Y_train, X_val, Y_val, X_test, Y_test
 
 
-def load_CIFAR(seed):
-    if _is_CIFAR_preprocd(seed):
+def load_CIFAR(seed, force=False):
+    if (not force) and _is_CIFAR_preprocd(seed):
         print("Found preprocessed data for seed={}.".format(seed))
         return _load_preprocd_CIFAR(seed)
     else:
@@ -90,15 +116,6 @@ def load_CIFAR(seed):
         cifar = _preproc_CIFAR(seed)
         _save_preprocd_CIFAR(cifar, seed)
         return cifar
-
-
-def split_luminosity_and_lab(rgb_images):
-    lab = color.rgb2lab(rgb_images)
-    lab_scaled = (lab + [-50., 0.5, 0.5]) / [50., 127.5, 127.5]
-
-    X = lab_scaled[:, :, :, 0:1]
-    Y = lab_scaled
-    return X, Y
 
 
 def save_lab_images(img_batch, filename="images/output_{}.png"):
