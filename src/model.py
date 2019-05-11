@@ -12,9 +12,11 @@ class Model:
         # TODO: put these parameters as arguments or something.
 
         # Training settings.
-        self.learning_rate = 0.001
         self.num_epochs = 200
         self.batch_size = 128
+        self.starter_learning_rate = 0.001
+        self.lr_decay_steps = 50
+        self.lr_decay_rate = 0.3
         self.shuffle = True
 
         self.compiled = False
@@ -49,6 +51,17 @@ class Model:
         # Loss and metrics.
         self.loss = tf.keras.losses.MeanSquaredError()(self.Y, self.out)
         #self.loss = tf.reduce_sum(tf.square(self.out - self.Y))
+
+        # Global step
+        self.global_step = tf.Variable(0, trainable=False, name='Global_Step')
+
+        # Learning rate
+        self.learning_rate = tf.train.exponential_decay(
+            self.starter_learning_rate,
+            self.global_step,
+            self.lr_decay_steps,
+            self.lr_decay_rate,
+            name='Learning_Rate_Decay')
 
         # Optimizer.
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.loss)
@@ -98,7 +111,9 @@ class Model:
                     batch_x = X_train[start:end,:,:,:]
                     batch_y = Y_train[start:end,:,:,:]
 
-                    _, l = self.sess.run([self.optimizer, self.loss], feed_dict={self.X: batch_x ,self.Y: batch_y})
+                    _, l = self.sess.run([self.optimizer, self.loss], feed_dict={self.X: batch_x,
+                                                                                 self.Y: batch_y,
+                                                                                 self.global_step: epoch})
 
                     epoch_loss += l / num_batches
 
