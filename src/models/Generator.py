@@ -2,11 +2,14 @@ import tensorflow as tf
 
 class Generator:
 
-    def __init__(self, seed):
-        self.seed = seed
+    def __init__(self, seed, is_training=True):
+        
         self.name = 'Generator'
+        self.seed = seed
 
         self.initializer = tf.glorot_uniform_initializer(self.seed)
+
+        self.is_training = is_training
 
         self.kernel_size = 4
 
@@ -27,9 +30,9 @@ class Generator:
 
         self.variables = []
 
-    def forward(self, X):
+    def forward(self, X, reuse_vars=None):
 
-        with tf.variable_scope(self.name, reuse=None):
+        with tf.variable_scope(self.name, reuse=reuse_vars):
 
             layers = []
 
@@ -47,6 +50,7 @@ class Generator:
 
             layers.append(output)
 
+
             for i, kernel in enumerate(self.kernels_encoder):
 
                 output = tf.layers.Conv2D(
@@ -63,6 +67,13 @@ class Generator:
 
                 layers.append(output)
 
+                if kernel[2] > 0:
+                    output = tf.keras.layers.Dropout(
+                                    name='enc_dropout_' + str(j),
+                                    rate=kernel[2],
+                                    seed=self.seed)(output, training=self.is_training)
+
+
             for j, kernel in enumerate(self.kernels_decoder):
 
                 output = tf.layers.Conv2DTranspose(
@@ -78,10 +89,10 @@ class Generator:
                 output = tf.nn.relu(output, name='dec_ReLu_'+str(j+1))
 
                 if kernel[2] > 0:
-                    output = tf.layers.Dropout(
+                    output = tf.keras.layers.Dropout(
                                     name='dec_dropout_' + str(j),
                                     rate=kernel[2],
-                                    seed=self.seed)(output)
+                                    seed=self.seed)(output, training=self.is_training)
 
                 output = tf.concat([layers[len(layers) - j - 2], output], axis=3)
 

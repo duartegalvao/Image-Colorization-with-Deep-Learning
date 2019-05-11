@@ -6,25 +6,29 @@ import datetime
 from models.Generator import Generator
 from models.Discriminator import Discriminator
 
+from helpers import save_lab_images
+
 class Model:
 
     def __init__(self, sess, seed):
 
         # TODO: put these parameters as arguments or something.
+        self.compiled = False
 
         # Training settings.
         self.learning_rate = 0.0003
         self.num_epochs = 200
         self.batch_size = 128
-        self.shuffle = False
-
-        self.compiled = False
+        self.shuffle = True
 
         # Verbose/logs/checkpoints options.
         self.verbose = True
         self.log = True
         self.save = True
         self.save_interval = 20
+        self.validate = True
+        self.sample_interval = 10
+        self.num_samples = 10
 
         # GAN parameters.
         self.label_smoothing = 0.9
@@ -73,11 +77,15 @@ class Model:
         self.gen_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.gen_loss, var_list=generator.variables)
         self.disc_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate/10).minimize(self.disc_loss, var_list=discriminator.variables)
         
+        # Sampler.
+        gen_sample = Generator(self.seed, is_training=False)
+        self.sampler = gen_sample.forward(self.X, reuse_vars=True)
+
         # Tensorboard.
-        tf.summary.scalar('gen_loss', self.gen_loss)
-        tf.summary.scalar('disc_loss', self.disc_loss)
-        tf.summary.scalar('disc_loss_real', self.disc_loss_real)
-        tf.summary.scalar('disc_loss_fake', self.disc_loss_fake)
+        # tf.summary.scalar('gen_loss', self.gen_loss)
+        # tf.summary.scalar('disc_loss', self.disc_loss)
+        # tf.summary.scalar('disc_loss_real', self.disc_loss_real)
+        # tf.summary.scalar('disc_loss_fake', self.disc_loss_fake)
 
         self.saver = tf.train.Saver()
 
@@ -90,25 +98,24 @@ class Model:
 
         N = X_train.shape[0]
         num_batches = int(N / self.batch_size)
-        
-        self.sess.run(tf.global_variables_initializer())
-
-        # Tensorboard.
-        merged = tf.summary.merge_all()
+    
+        # merged = tf.summary.merge_all()
         date = str(datetime.datetime.now()).replace(" ", "_")[:19]
 
         if not os.path.exists('checkpoints/' + date):
             os.makedirs('checkpoints/' + date)
 
         train_writer = tf.summary.FileWriter('logs/' + date + '/train', self.sess.graph)
-        val_writer = tf.summary.FileWriter('logs/' + date + '/val')
         train_writer.flush()
-        val_writer.flush()
+
+        self.sess.run(tf.global_variables_initializer())
 
         try:
             for epoch in range(self.num_epochs):
                 epoch_gen_loss = 0.0
                 epoch_disc_loss = 0.0
+                epoch_disc_real_loss = 0.0
+                epoch_disc_fake_loss = 0.0
 
                 if self.shuffle:
                     p = np.random.permutation(X_train.shape[0])
@@ -122,30 +129,41 @@ class Model:
                     batch_x = X_train[start:end,:,:,:]
                     batch_y = Y_train[start:end,:,:,:]
 
-                    _, l_disc = self.sess.run([self.disc_optimizer, self.disc_loss], feed_dict={self.X: batch_x, self.Y: batch_y})
+                    feed = {self.X: batch_x, self.Y: batch_y}
 
-                    _, l_gen = self.sess.run([self.gen_optimizer, self.gen_loss], feed_dict={self.X: batch_x, self.Y: batch_y})
-                    _, l_gen = self.sess.run([self.gen_optimizer, self.gen_loss], feed_dict={self.X: batch_x, self.Y: batch_y})
+                    _, l_disc, l_disc_fake, l_disc_real = self.sess.run([self.disc_optimizer, self.disc_loss, self.disc_loss_fake, self.disc_loss_real], feed_dict=feed)
+
+                    _, l_gen = self.sess.run([self.gen_optimizer, self.gen_loss], feed_dict=feed)
+                    #_, l_gen = self.sess.run([self.gen_optimizer, self.gen_loss], feed_dict={self.X: batch_x, self.Y: batch_y})
 
                     epoch_gen_loss += l_gen / num_batches
                     epoch_disc_loss += l_disc / num_batches
+                    epoch_disc_fake_loss += l_disc_fake / num_batches
+                    epoch_disc_real_loss += l_disc_real / num_batches
 
                 if self.verbose:
-                    print('Epoch:', (epoch+1), 'gen_loss =', epoch_gen_loss)
-                    print('Epoch:', (epoch+1), 'disc_loss =', epoch_disc_loss)
+                    print('Epoch: {0}'.format(epoch+1))
+                    print('gen_loss =', epoch_gen_loss)
+                    print('disc_loss =', epoch_disc_loss)
+                    print('disc_fake_loss =', epoch_disc_fake_loss)
+                    print('disc_real_loss =', epoch_disc_real_loss, ' \n')
 
+                # Add training losses to train log (tensorboard).
                 if self.log:
-                    # Add training epoch loss to train log.
                     summary = tf.Summary()
                     summary.value.add(tag='gen_loss', simple_value=epoch_gen_loss)
                     summary.value.add(tag='disc_loss', simple_value=epoch_disc_loss)
+                    summary.value.add(tag='disc_fake_loss', simple_value=epoch_disc_fake_loss)
+                    summary.value.add(tag='disc_real_loss', simple_value=epoch_disc_real_loss)
                     train_writer.add_summary(summary, epoch)
                     train_writer.flush()
 
-                    # Add validation loss to val log.
-                    summary = self.sess.run(merged, feed_dict={self.X: X_val ,self.Y: Y_val})
-                    val_writer.add_summary(summary, epoch)
-                    val_writer.flush()
+                # Sample model (validate).
+                if self.validate and (epoch+1) % self.sample_interval == 0:
+                    X_pred = X_val[0:self.num_samples,:,:,:]
+                    samples = self.sample(X_pred)
+                    samples = np.concatenate([X_pred,samples], axis=3)
+                    save_lab_images(samples, filename="images/val_{}/epoch_" + str(epoch+1) + ".png")
 
                 # Save model.
                 if self.save and (epoch+1) % self.save_interval == 0:
@@ -162,10 +180,9 @@ class Model:
         self.saver.restore(self.sess, os.path.join(path, ckpt_name))
 
 
-    def predict(self, X):
-
+    def sample(self, X):
         if not self.compiled:
             print('Compile model first.')
             return
 
-        return self.sess.run(self.gen_out, feed_dict={self.X: X})
+        return self.sess.run(self.sampler, feed_dict={self.X: X})

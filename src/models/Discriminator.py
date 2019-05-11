@@ -3,8 +3,9 @@ import tensorflow as tf
 class Discriminator:
 
     def __init__(self, seed):
-        self.seed = seed
+
         self.name = 'Discriminator'
+        self.seed = seed
 
         self.initializer = tf.glorot_uniform_initializer(self.seed)
 
