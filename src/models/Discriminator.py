@@ -46,21 +46,21 @@ class Discriminator:
 
                 output = tf.nn.leaky_relu(output, name='leaky_ReLu'+str(i+2))
 
-            """output = tf.layers.Conv2D(
+            output = tf.layers.Conv2D(
                                 name='conv_' + str(i+3),
                                 filters=1,
                                 strides=1,
                                 kernel_size=self.kernel_size,
                                 padding='valid',
                                 activation=None,
-                                kernel_initializer=self.initializer)(output)"""
+                                kernel_initializer=self.initializer)(output)
                 
-            output = tf.layers.Flatten(name='flatten')(output)
+            """output = tf.layers.Flatten(name='flatten')(output)
             output = tf.layers.Dense(
                                 name='dense',
                                 units=1,
                                 activation=None,
-                                kernel_initializer=self.initializer)(output)
+                                kernel_initializer=self.initializer)(output)"""
 
             self.variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, self.name)
 

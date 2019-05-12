@@ -17,7 +17,7 @@ class Model:
 
         # Training settings.
         self.learning_rate = 0.0003
-        self.num_epochs = 200
+        self.num_epochs = 100
         self.batch_size = 128
         self.shuffle = True
 
@@ -25,10 +25,10 @@ class Model:
         self.verbose = True
         self.log = True
         self.save = True
-        self.save_interval = 20
+        self.save_interval = 10
         self.validate = True
         self.sample_interval = 10
-        self.num_samples = 10
+        self.num_samples = 20
 
         # GAN parameters.
         self.label_smoothing = 0.9
@@ -62,9 +62,9 @@ class Model:
         disc_out_fake = discriminator.forward(tf.concat([self.X, self.gen_out], 3), reuse_vars=True)
 
         # Generator loss.
-        gen_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=disc_out_fake, labels=tf.ones_like(disc_out_fake)))
-        gen_loss_l1 = tf.reduce_mean(tf.abs(self.Y - self.gen_out)) * self.l1_weight
-        self.gen_loss = gen_loss + gen_loss_l1
+        self.gen_loss_gan = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=disc_out_fake, labels=tf.ones_like(disc_out_fake)))
+        self.gen_loss_l1 = tf.reduce_mean(tf.abs(self.Y - self.gen_out)) * self.l1_weight
+        self.gen_loss = self.gen_loss_gan + self.gen_loss_l1
 
         # Discriminator losses.
         disc_l_fake = tf.nn.sigmoid_cross_entropy_with_logits(logits=disc_out_fake, labels=tf.zeros_like(disc_out_fake))
@@ -76,16 +76,10 @@ class Model:
         # Optimizers.
         self.gen_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.gen_loss, var_list=generator.variables)
         self.disc_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate/10).minimize(self.disc_loss, var_list=discriminator.variables)
-        
+
         # Sampler.
         gen_sample = Generator(self.seed, is_training=False)
         self.sampler = gen_sample.forward(self.X, reuse_vars=True)
-
-        # Tensorboard.
-        # tf.summary.scalar('gen_loss', self.gen_loss)
-        # tf.summary.scalar('disc_loss', self.disc_loss)
-        # tf.summary.scalar('disc_loss_real', self.disc_loss_real)
-        # tf.summary.scalar('disc_loss_fake', self.disc_loss_fake)
 
         self.saver = tf.train.Saver()
 
@@ -99,7 +93,6 @@ class Model:
         N = X_train.shape[0]
         num_batches = int(N / self.batch_size)
     
-        # merged = tf.summary.merge_all()
         date = str(datetime.datetime.now()).replace(" ", "_")[:19]
 
         if not os.path.exists('checkpoints/' + date):
@@ -113,6 +106,8 @@ class Model:
         try:
             for epoch in range(self.num_epochs):
                 epoch_gen_loss = 0.0
+                epoch_gen_gan_loss = 0.0
+                epoch_gen_l1_loss = 0.0
                 epoch_disc_loss = 0.0
                 epoch_disc_real_loss = 0.0
                 epoch_disc_fake_loss = 0.0
@@ -133,10 +128,12 @@ class Model:
 
                     _, l_disc, l_disc_fake, l_disc_real = self.sess.run([self.disc_optimizer, self.disc_loss, self.disc_loss_fake, self.disc_loss_real], feed_dict=feed)
 
-                    _, l_gen = self.sess.run([self.gen_optimizer, self.gen_loss], feed_dict=feed)
-                    #_, l_gen = self.sess.run([self.gen_optimizer, self.gen_loss], feed_dict={self.X: batch_x, self.Y: batch_y})
+                    _, l_gen, l_gen_gan, l_gen_l1 = self.sess.run([self.gen_optimizer, self.gen_loss, self.gen_loss_gan, self.gen_loss_l1], feed_dict=feed)
+                    #_, l_gen, l_gen_gan, l_gen_l1 = self.sess.run([self.gen_optimizer, self.gen_loss, self.gen_loss_gan, self.gen_loss_l1], feed_dict=feed)
 
                     epoch_gen_loss += l_gen / num_batches
+                    epoch_gen_gan_loss += l_gen_gan / num_batches
+                    epoch_gen_l1_loss += l_gen_l1 / num_batches
                     epoch_disc_loss += l_disc / num_batches
                     epoch_disc_fake_loss += l_disc_fake / num_batches
                     epoch_disc_real_loss += l_disc_real / num_batches
@@ -144,6 +141,8 @@ class Model:
                 if self.verbose:
                     print('Epoch: {0}'.format(epoch+1))
                     print('gen_loss =', epoch_gen_loss)
+                    print('gen_gan_loss =', epoch_gen_gan_loss)
+                    print('gen_l1_loss =', epoch_gen_l1_loss)
                     print('disc_loss =', epoch_disc_loss)
                     print('disc_fake_loss =', epoch_disc_fake_loss)
                     print('disc_real_loss =', epoch_disc_real_loss, ' \n')
@@ -152,6 +151,8 @@ class Model:
                 if self.log:
                     summary = tf.Summary()
                     summary.value.add(tag='gen_loss', simple_value=epoch_gen_loss)
+                    summary.value.add(tag='gen_gan_loss', simple_value=epoch_gen_gan_loss)
+                    summary.value.add(tag='gen_l1_loss', simple_value=epoch_gen_l1_loss)
                     summary.value.add(tag='disc_loss', simple_value=epoch_disc_loss)
                     summary.value.add(tag='disc_fake_loss', simple_value=epoch_disc_fake_loss)
                     summary.value.add(tag='disc_real_loss', simple_value=epoch_disc_real_loss)
