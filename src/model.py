@@ -16,10 +16,14 @@ class Model:
         self.compiled = False
 
         # Training settings.
-        self.learning_rate = 0.0003
-        self.num_epochs = 200
+        self.num_epochs = 250
         self.batch_size = 128
         self.shuffle = True
+
+        self.learning_rate = 0.0003
+        self.learning_rate_decay = True
+        self.learning_rate_decay_steps = 10000.0
+        self.learning_rate_decay_rate = 0.1
 
         # Verbose/logs/checkpoints options.
         self.verbose = True
@@ -31,7 +35,7 @@ class Model:
         self.num_samples = 20
 
         # GAN parameters.
-        self.label_smoothing = 1.0
+        self.label_smoothing = 0.9
         self.l1_weight = 100.0
 
         self.sess = sess
@@ -74,8 +78,21 @@ class Model:
         self.disc_loss = tf.reduce_mean(disc_l_fake + disc_l_real)
 
         # Optimizers.
-        self.gen_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=0.0).minimize(self.gen_loss, var_list=generator.variables)
-        self.disc_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate/10, beta1=0.0).minimize(self.disc_loss, var_list=discriminator.variables)
+        self.global_step = tf.Variable(0, name='global_step', trainable=False)
+
+        # Learning rate decay.
+        if self.learning_rate_decay:
+            self.lr = tf.maximum(1e-6, tf.train.exponential_decay(
+                learning_rate=self.learning_rate,
+                global_step=self.global_step,
+                decay_steps=self.learning_rate_decay_steps,
+                decay_rate=self.learning_rate_decay_rate))
+        else:
+            # Constant learning rate.
+            self.lr =  tf.constant(self.learning_rate)
+
+        self.gen_optimizer = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(self.gen_loss, var_list=generator.variables)
+        self.disc_optimizer = tf.train.AdamOptimizer(learning_rate=self.lr/10).minimize(self.disc_loss, var_list=discriminator.variables, global_step=self.global_step)
 
         # Sampler.
         gen_sample = Generator(self.seed, is_training=False)
@@ -94,10 +111,8 @@ class Model:
         num_batches = int(N / self.batch_size)
     
         date = str(datetime.datetime.now()).replace(" ", "_")[:19]
-
         if not os.path.exists('checkpoints/' + date):
             os.makedirs('checkpoints/' + date)
-
         train_writer = tf.summary.FileWriter('logs/' + date + '/train', self.sess.graph)
         train_writer.flush()
 
@@ -138,8 +153,11 @@ class Model:
                     epoch_disc_fake_loss += l_disc_fake / num_batches
                     epoch_disc_real_loss += l_disc_real / num_batches
 
+                lr = self.sess.run(self.lr)
+
                 if self.verbose:
                     print('Epoch: {0}'.format(epoch+1))
+                    print('learning_rate =', lr)
                     print('gen_loss =', epoch_gen_loss)
                     print('gen_gan_loss =', epoch_gen_gan_loss)
                     print('gen_l1_loss =', epoch_gen_l1_loss)
@@ -150,6 +168,7 @@ class Model:
                 # Add training losses to train log (tensorboard).
                 if self.log:
                     summary = tf.Summary()
+                    summary.value.add(tag='learning_rate', simple_value=lr)
                     summary.value.add(tag='gen_loss', simple_value=epoch_gen_loss)
                     summary.value.add(tag='gen_gan_loss', simple_value=epoch_gen_gan_loss)
                     summary.value.add(tag='gen_l1_loss', simple_value=epoch_gen_l1_loss)

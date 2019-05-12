@@ -35,8 +35,8 @@ class Generator:
         self.kernels_encoder = [   
             (128, 2, 0),
             (256, 2, 0),
-            (512, 2, 0),
-            (512, 2, 0),
+            (512, 2, 0.5),
+            (512, 2, 0.5),
         ]
 
         # (num_filters, strides, dropout)
@@ -88,7 +88,7 @@ class Generator:
 
                 if kernel[2] != 0:
                     output = tf.keras.layers.Dropout(
-                                    name='enc_dropout_' + str(j),
+                                    name='enc_dropout_' + str(i),
                                     rate=kernel[2],
                                     seed=self.seed)(output, training=self.is_training)
 
