@@ -17,3 +17,15 @@ You can also run a python SimpleHTTPServer, for the same effect:
 ```bash
 python -m SimpleHTTPServer 8001
 ```
+
+## Statistics script
+
+Also included is a python script to parse the test results and calculate relevant statistics.
+
+Simply run it as follows:
+
+```bash
+python3 stats.py <filename>
+```
+
+Where `<filename>` is the path to the generated JSON file.

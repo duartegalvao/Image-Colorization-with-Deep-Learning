@@ -29,9 +29,9 @@ class TuringTest {
         function get_img_src(img_id, is_ground_truth) {
             let src = "/src/images/test_" + img_id + "/";
             if (is_ground_truth)
-                src += "before_color";
+                src += "true_color";
             else
-                src += "after"
+                src += "after_train"
             return src + ".png";
         }
 
