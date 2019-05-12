@@ -17,7 +17,7 @@ class Model:
 
         # Training settings.
         self.learning_rate = 0.0003
-        self.num_epochs = 100
+        self.num_epochs = 200
         self.batch_size = 128
         self.shuffle = True
 
@@ -31,7 +31,7 @@ class Model:
         self.num_samples = 20
 
         # GAN parameters.
-        self.label_smoothing = 0.9
+        self.label_smoothing = 1.0
         self.l1_weight = 100.0
 
         self.sess = sess
@@ -74,8 +74,8 @@ class Model:
         self.disc_loss = tf.reduce_mean(disc_l_fake + disc_l_real)
 
         # Optimizers.
-        self.gen_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.gen_loss, var_list=generator.variables)
-        self.disc_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate/10).minimize(self.disc_loss, var_list=discriminator.variables)
+        self.gen_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=0.0).minimize(self.gen_loss, var_list=generator.variables)
+        self.disc_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate/10, beta1=0.0).minimize(self.disc_loss, var_list=discriminator.variables)
 
         # Sampler.
         gen_sample = Generator(self.seed, is_training=False)
@@ -129,7 +129,7 @@ class Model:
                     _, l_disc, l_disc_fake, l_disc_real = self.sess.run([self.disc_optimizer, self.disc_loss, self.disc_loss_fake, self.disc_loss_real], feed_dict=feed)
 
                     _, l_gen, l_gen_gan, l_gen_l1 = self.sess.run([self.gen_optimizer, self.gen_loss, self.gen_loss_gan, self.gen_loss_l1], feed_dict=feed)
-                    #_, l_gen, l_gen_gan, l_gen_l1 = self.sess.run([self.gen_optimizer, self.gen_loss, self.gen_loss_gan, self.gen_loss_l1], feed_dict=feed)
+                    _, l_gen, l_gen_gan, l_gen_l1 = self.sess.run([self.gen_optimizer, self.gen_loss, self.gen_loss_gan, self.gen_loss_l1], feed_dict=feed)
 
                     epoch_gen_loss += l_gen / num_batches
                     epoch_gen_gan_loss += l_gen_gan / num_batches

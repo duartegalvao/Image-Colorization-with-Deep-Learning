@@ -3,19 +3,31 @@ import tensorflow as tf
 class Discriminator:
 
     def __init__(self, seed):
+        """
+            Architecture:
+                [?, 32, 32, ch] => [?, 16, 16, 64]
+                [?, 16, 16, 64] => [?, 8, 8, 128]
+                [?, 8, 8, 128] => [?, 4, 4, 256]
+                [?, 4, 4, 256] => [?, 4, 4, 512]
+                [?, 4, 4, 512] => [?, 1, 1, 1]
 
+        """
         self.name = 'Discriminator'
         self.seed = seed
 
-        self.initializer = tf.glorot_uniform_initializer(self.seed)
+        # OURS: self.initializer = tf.glorot_uniform_initializer(self.seed)
+        # PAPER ONE:
+        self.initializer = tf.variance_scaling_initializer(seed=self.seed)
 
         self.kernel_size = 4
 
+        self.is_training = True
+
+        # (num_filters, strides)
         self.kernels = [
-            #(64, 2, 0),     # [batch, 32, 32, ch] => [batch, 16, 16, 64]
-            (128, 2, 0),    # [batch, 16, 16, 64] => [batch, 8, 8, 128]
-            (256, 2, 0),    # [batch, 8, 8, 128] => [batch, 4, 4, 256]
-            (512, 1, 0),    # [batch, 4, 4, 256] => [batch, 4, 4, 512]
+            (128, 2),
+            (256, 2),
+            (512, 1),
         ]
 
         self.variables = []
@@ -46,16 +58,26 @@ class Discriminator:
 
                 output = tf.nn.leaky_relu(output, name='leaky_ReLu'+str(i+2))
 
+            # PAPER ONE:
             output = tf.layers.Conv2D(
+                                name='conv_' + str(i+3),
+                                filters=1,
+                                strides=1,
+                                kernel_size=self.kernel_size,
+                                padding='same',
+                                activation=None,
+                                kernel_initializer=self.initializer)(output)
+
+            """ OURS 2: output = tf.layers.Conv2D(
                                 name='conv_' + str(i+3),
                                 filters=1,
                                 strides=1,
                                 kernel_size=self.kernel_size,
                                 padding='valid',
                                 activation=None,
-                                kernel_initializer=self.initializer)(output)
+                                kernel_initializer=self.initializer)(output)"""
                 
-            """output = tf.layers.Flatten(name='flatten')(output)
+            """ OURS 1: output = tf.layers.Flatten(name='flatten')(output)
             output = tf.layers.Dense(
                                 name='dense',
                                 units=1,

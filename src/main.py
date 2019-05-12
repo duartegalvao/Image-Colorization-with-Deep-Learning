@@ -10,14 +10,14 @@ SEED = 26
 print('Loading dataset...')
 X_train, Y_train, X_val, Y_val, X_test, Y_test = load_CIFAR(SEED)
 
-#X_train = X_train[0:5000,:,:,:]
-#Y_train = Y_train[0:5000,:,:,:]
+X_train = X_train[0:5000,:,:,:]
+Y_train = Y_train[0:5000,:,:,:]
 
-#X_val = X_val[0:100,:,:,:]
-#Y_val = Y_val[0:100,:,:,:]
+X_val = X_val[0:100,:,:,:]
+Y_val = Y_val[0:100,:,:,:]
 
-#X_test = X_test[0:100,:,:,:]
-#Y_test = Y_test[0:100,:,:,:]
+X_test = X_test[0:100,:,:,:]
+Y_test = Y_test[0:100,:,:,:]
 
 print('Train:')
 print('X_train:', X_train.shape)
