@@ -43,9 +43,7 @@ save_lab_images(Y_test[0:120,:,:,:], filename="images/test_{}/true_color.png")
 np.random.seed(SEED)
 tf.random.set_random_seed(SEED)
 
-
-"""config=tf.ConfigProto(log_device_placement=True)"""
-with tf.Session() as sess:
+with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
     
     model = Model(sess, SEED)
 

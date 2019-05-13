@@ -23,9 +23,10 @@ class Generator:
         self.name = 'Generator'
         self.seed = seed
 
-        # OURS: self.initializer = tf.glorot_uniform_initializer(self.seed)
+        # OURS:
+        self.initializer = tf.glorot_uniform_initializer(self.seed)
         # PAPER ONE:
-        self.initializer = tf.variance_scaling_initializer(seed=self.seed)
+        # self.initializer = tf.variance_scaling_initializer(seed=self.seed)
 
         self.is_training = is_training
 

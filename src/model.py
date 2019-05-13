@@ -18,12 +18,12 @@ class Model:
         self.compiled = False
 
         # Training settings.
-        self.num_epochs = 250
+        self.num_epochs = 300
         self.batch_size = 128
         self.shuffle = True
         self.learning_rate = 0.0003
         self.learning_rate_decay = True
-        self.learning_rate_decay_steps = 10000.0
+        self.learning_rate_decay_steps = 20000.0
         self.learning_rate_decay_rate = 0.1
 
         # Verbose/logs/checkpoints options.
@@ -36,7 +36,7 @@ class Model:
         self.num_samples = 20
 
         # GAN parameters.
-        self.label_smoothing = 0.9
+        self.label_smoothing = 1.0
         self.l1_weight = 100.0
 
         self.sess = sess
