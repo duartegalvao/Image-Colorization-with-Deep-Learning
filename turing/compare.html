@@ -12,21 +12,27 @@
   </head>
   <body class="bg-dark text-light">
     <div class="container" style="max-width: 100%">
-        <div class="row" id="start-instruction">
-            <div class="col m-5">
-                <h1 class="text-center">Choose the turing test to take:</h1>
+        <div class="row justify-content-center">
+            <div class="col-auto">
+                <p class="text-muted mt-5 text-center">
+                    Use your arrows to choose the most realistic image.
+                </p>
+                <p class="text-muted mb-5 mt-2 text-center">
+                    Press S to save results.
+                </p>
             </div>
         </div>
-        <div class="row">
-            <div class="col text-center">
-                <h3>
-                    <a href="/turing/compare.html">Comparison Test</a>
-                </h3>
+        <div class="row" id="start-instruction">
+            <div class="col">
+                <h1 class="text-center">Press a left or right arrow key to start.</h1>
             </div>
-            <div class="col text-center">
-                <h3>
-                    <a href="/turing/solo.html">Solo Test</a>
-                </h3>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col text-right">
+                <img src="" id="img_left" class="m-3 w-50" />
+            </div>
+            <div class="col text-left">
+                <img src="" id="img_right" class="m-3 w-50" />
             </div>
         </div>
     </div>
@@ -36,5 +42,6 @@
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script src="/turing/res/compare.js"></script>
   </body>
 </html>

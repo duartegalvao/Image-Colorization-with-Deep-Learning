@@ -7,11 +7,6 @@ const TT_STATE = {
     TESTING: 3
 };
 
-const TT_CHOICE = {
-    LEFT: 1,
-    RIGHT: 2
-};
-
 
 class TuringTest {
     constructor(num_samples) {
@@ -38,25 +33,14 @@ class TuringTest {
         this.state = TT_STATE.GENERATING;
 
         let img_id = Math.floor(Math.random() * this.num_samples);
-        let correct_choice = Math.floor(Math.random() * 2) + 1;
+        let show_truth = (Math.floor(Math.random() * 2) + 1) === 1;
 
-        switch (correct_choice) {
-            case TT_CHOICE.LEFT:
-                $("#img_left").attr('src', get_img_src(img_id, true));
-                $("#img_right").attr('src', get_img_src(img_id, false));
-                break;
-            case TT_CHOICE.RIGHT:
-                $("#img_left").attr('src', get_img_src(img_id, false));
-                $("#img_right").attr('src', get_img_src(img_id, true));
-                break;
-            default:
-                console.log("Unknown error (invalid choice side).")
-        }
+        $("#test_img").attr('src', get_img_src(img_id, show_truth));
 
         this.current_test = {
             start_time: $.now(),
             img_id: img_id,
-            correct_choice: correct_choice
+            is_truth: show_truth
         };
 
         this.state = TT_STATE.TESTING;
@@ -69,8 +53,8 @@ class TuringTest {
 
             this.tests.push({
                 img_id: this.current_test.img_id,
-                correct_choice: this.current_test.correct_choice,
-                correct: this.current_test.correct_choice === choice,
+                is_truth: this.current_test.is_truth,
+                correct: this.current_test.is_truth === choice,
                 time: click_time - this.current_test.start_time
             });
         }
@@ -87,7 +71,7 @@ class TuringTest {
         let jsonData = JSON.stringify({tests: this.tests,
             num_samples: this.num_samples,
             generated: $.now()
-        })
+        });
         download(jsonData, filename, 'text/plain');
     }
 }
@@ -97,14 +81,15 @@ var turing_test = new TuringTest(NUM_SAMPLES);
 $(document).ready(function () {
     $(window).keydown(function(e) {
         let key = e.which;
-        if (key === 37 || key === 65) { // left or A
+
+        if (key === 84) { // T
             $("#start-instruction").remove();
-            turing_test.pickChoice(TT_CHOICE.LEFT);
+            turing_test.pickChoice(true);
             turing_test.genTest();
         }
-        else if (key === 39 || key === 68) { // right or D
+        else if (key === 70) { // F
             $("#start-instruction").remove();
-            turing_test.pickChoice(TT_CHOICE.RIGHT);
+            turing_test.pickChoice(false);
             turing_test.genTest();
         }
         else if (key === 83) {
