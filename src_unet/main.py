@@ -61,18 +61,18 @@ with tf.Session() as sess:
 
     print('Predicting training set...')
     X_train = X_train[0:20,:,:,:]
-    pred = UNET.predict(X_train)
+    pred = UNET.sample(X_train)
     pred = np.concatenate([X_train,pred], axis=3)
     save_lab_images(pred, filename="images/train_{}/after.png")
 
     print('Predicting validation set...')
     X_val = X_val[0:20,:,:,:]
-    pred = UNET.predict(X_val)
+    pred = UNET.sample(X_val)
     pred = np.concatenate([X_val,pred], axis=3)
     save_lab_images(pred, filename="images/val_{}/after.png")
 
     print('Predicting test set...')
     X_test = X_test[0:20,:,:,:]
-    pred = UNET.predict(X_test)
+    pred = UNET.sample(X_test)
     pred = np.concatenate([X_test,pred], axis=3)
     save_lab_images(pred, filename="images/test_{}/after.png")

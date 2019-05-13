@@ -2,30 +2,52 @@ import tensorflow as tf
 
 class UNet:
 
-    def __init__(self, seed):
+    def __init__(self, seed, is_training=True):
+        """
+            Architecture:
+                Encoder: 
+                    [?, 32, 32, input_ch] => [?, 32, 32, 64]
+                    [?, 32, 32, 64] => [?, 16, 16, 128]
+                    [?, 16, 16, 128] => [?, 8, 8, 256]
+                    [?, 8, 8, 256] => [?, 4, 4, 512]
+                    [?, 4, 4, 512] => [?, 2, 2, 512]
+
+                Decoder:
+                    [?, 2, 2, 512] => [?, 4, 4, 512]
+                    [?, 4, 4, 512] => [?, 8, 8, 256]
+                    [?, 8, 8, 256] => [?, 16, 16, 128]
+                    [?, 16, 16, 128] => [?, 32, 32, 64]
+                    [?, 32, 32, 64] => [?, 32, 32, out_ch]
+
+        """
+        self.name = 'UNet'
         self.seed = seed
+
         self.initializer = tf.glorot_uniform_initializer(self.seed)
+
+        self.is_training = is_training
 
         self.kernel_size = 4
 
+        # (num_filters, strides, dropout)
         self.kernels_encoder = [
-            #(64, 1, 0),     # [batch, 32, 32, ch] => [batch, 32, 32, 64]
-            (128, 2, 0),    # [batch, 32, 32, 64] => [batch, 16, 16, 128]
-            (256, 2, 0),    # [batch, 16, 16, 128] => [batch, 8, 8, 256]
-            (512, 2, 0),    # [batch, 8, 8, 256] => [batch, 4, 4, 512]
-            (512, 2, 0),    # [batch, 4, 4, 512] => [batch, 2, 2, 512]
+            (128, 2, 0),
+            (256, 2, 0),
+            (512, 2, 0),
+            (512, 2, 0),
         ]
 
+        # (num_filters, strides, dropout)
         self.kernels_decoder = [
-            (512, 2, 0.5),  # [batch, 2, 2, 512] => [batch, 4, 4, 512]
-            (256, 2, 0.5),  # [batch, 4, 4, 512] => [batch, 8, 8, 256]
-            (128, 2, 0),    # [batch, 8, 8, 256] => [batch, 16, 16, 128]
-            (64, 2, 0),     # [batch, 16, 16, 128] => [batch, 32, 32, 64]
+            (512, 2, 0.5),
+            (256, 2, 0.5),
+            (128, 2, 0),
+            (64, 2, 0),
         ]
 
-    def forward(self, X):
+    def forward(self, X, reuse_vars=None):
 
-        with tf.variable_scope('UNet'):
+        with tf.variable_scope(self.name, reuse=reuse_vars):
 
             layers = []
 
@@ -59,6 +81,12 @@ class UNet:
 
                 layers.append(output)
 
+                if kernel[2] != 0:
+                    output = tf.keras.layers.Dropout(
+                                    name='enc_dropout_' + str(i),
+                                    rate=kernel[2],
+                                    seed=self.seed)(output, training=self.is_training)
+
             for j, kernel in enumerate(self.kernels_decoder):
 
                 output = tf.layers.Conv2DTranspose(
@@ -73,11 +101,11 @@ class UNet:
 
                 output = tf.nn.relu(output, name='dec_ReLu_'+str(j+1))
 
-                if kernel[2] > 0:
+                if kernel[2] != 0:
                     output = tf.layers.Dropout(
                                     name='dec_dropout_' + str(j),
                                     rate=kernel[2],
-                                    seed=self.seed)(output)
+                                    seed=self.seed)(output, training=self.is_training)
 
                 output = tf.concat([layers[len(layers) - j - 2], output], axis=3)
 
@@ -89,7 +117,7 @@ class UNet:
                                 padding='same',
                                 activation=tf.nn.tanh,
                                 kernel_initializer=self.initializer)(output)
-            
+
         return output
 
             

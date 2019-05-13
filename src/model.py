@@ -9,20 +9,18 @@ from models.Discriminator import Discriminator
 from helpers import save_lab_images
 
 class Model:
+    """
+        GAN.
+    """
 
     def __init__(self, sess, seed):
 
-        # TODO: put these parameters as arguments or something.
         self.compiled = False
 
         # Training settings.
         self.num_epochs = 250
         self.batch_size = 128
-        self.starter_learning_rate = 0.001
-        self.lr_decay_steps = 50
-        self.lr_decay_rate = 0.3
         self.shuffle = True
-
         self.learning_rate = 0.0003
         self.learning_rate_decay = True
         self.learning_rate_decay_steps = 10000.0
@@ -80,10 +78,10 @@ class Model:
         self.disc_loss_real = tf.reduce_mean(disc_l_real)
         self.disc_loss = tf.reduce_mean(disc_l_fake + disc_l_real)
 
-        # Optimizers.
+        # Global step.
         self.global_step = tf.Variable(0, name='global_step', trainable=False)
 
-        # Learning rate decay.
+        # Learning rate.
         if self.learning_rate_decay:
             self.lr = tf.maximum(1e-6, tf.train.exponential_decay(
                 learning_rate=self.learning_rate,
@@ -91,9 +89,9 @@ class Model:
                 decay_steps=self.learning_rate_decay_steps,
                 decay_rate=self.learning_rate_decay_rate))
         else:
-            # Constant learning rate.
-            self.lr =  tf.constant(self.learning_rate)
+            self.lr = tf.constant(self.learning_rate)
 
+        # Optimizers.
         self.gen_optimizer = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(self.gen_loss, var_list=generator.variables)
         self.disc_optimizer = tf.train.AdamOptimizer(learning_rate=self.lr/10).minimize(self.disc_loss, var_list=discriminator.variables, global_step=self.global_step)
 
@@ -113,6 +111,7 @@ class Model:
         N = X_train.shape[0]
         num_batches = int(N / self.batch_size)
     
+        # Tensorboard.
         date = str(datetime.datetime.now()).replace(" ", "_")[:19]
         if not os.path.exists('checkpoints/' + date):
             os.makedirs('checkpoints/' + date)

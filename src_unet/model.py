@@ -5,27 +5,33 @@ import datetime
 
 from models.UNet import UNet
 
-class Model:
+from helpers import save_lab_images
 
+class Model:
+    """
+        U-Net.
+    """
     def __init__(self, sess, seed):
 
-        # TODO: put these parameters as arguments or something.
+        self.compiled = False
 
         # Training settings.
         self.num_epochs = 200
         self.batch_size = 128
-        self.starter_learning_rate = 0.001
-        self.lr_decay_steps = 50
-        self.lr_decay_rate = 0.3
         self.shuffle = True
-
-        self.compiled = False
-
+        self.learning_rate = 0.001
+        self.learning_rate_decay = True
+        self.learning_rate_decay_steps = 50
+        self.learning_rate_decay_rate = 0.3
+        
         # Verbose/logs/checkpoints options.
         self.verbose = True
         self.log = True
         self.save = True
         self.save_interval = 20
+        self.validate = True
+        self.sample_interval = 10
+        self.num_samples = 20
 
         self.sess = sess
         self.seed = seed
@@ -44,27 +50,34 @@ class Model:
         self.X = tf.placeholder(tf.float32, shape=(None, 32, 32, 1), name='X')
         self.Y = tf.placeholder(tf.float32, shape=(None, 32, 32, 2), name='Y')
 
-        # Model.
+        # U-Net.
         net = UNet(self.seed)
         self.out = net.forward(self.X)
 
         # Loss and metrics.
+        # TODO: try with MAE.
         self.loss = tf.keras.losses.MeanSquaredError()(self.Y, self.out)
-        #self.loss = tf.reduce_sum(tf.square(self.out - self.Y))
 
-        # Global step
+        # Global step.
         self.global_step = tf.Variable(0, trainable=False, name='Global_Step')
 
-        # Learning rate
-        self.learning_rate = tf.train.exponential_decay(
-            self.starter_learning_rate,
-            self.global_step,
-            self.lr_decay_steps,
-            self.lr_decay_rate,
-            name='Learning_Rate_Decay')
+        # Learning rate.
+        if self.learning_rate_decay:
+            self.lr = tf.train.exponential_decay(
+                self.learning_rate,
+                self.global_step,
+                self.learning_rate_decay_steps,
+                self.learning_rate_decay_rate,
+                name='learning_rate_decay')
+        else:
+            self.lr = tf.constant(self.learning_rate)
 
         # Optimizer.
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.loss)
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(self.loss, global_step=self.global_step)
+
+        # Sampler.
+        gen_sample = UNet(self.seed, is_training=False)
+        self.sampler = gen_sample.forward(self.X, reuse_vars=True)
 
         # Tensorboard.
         tf.summary.scalar('loss', self.loss)
@@ -80,24 +93,22 @@ class Model:
 
         N = X_train.shape[0]
         num_batches = int(N / self.batch_size)
-        
-        self.sess.run(tf.global_variables_initializer())
 
         # Tensorboard.
         merged = tf.summary.merge_all()
         date = str(datetime.datetime.now()).replace(" ", "_")[:19]
-
         if not os.path.exists('checkpoints/' + date):
             os.makedirs('checkpoints/' + date)
-
         train_writer = tf.summary.FileWriter('logs/' + date + '/train', self.sess.graph)
         val_writer = tf.summary.FileWriter('logs/' + date + '/val')
         train_writer.flush()
         val_writer.flush()
 
+        self.sess.run(tf.global_variables_initializer())
+
         try:
             for epoch in range(self.num_epochs):
-                epoch_loss = 0.0
+                epoch_train_loss = 0.0
 
                 if self.shuffle:
                     p = np.random.permutation(X_train.shape[0])
@@ -111,26 +122,35 @@ class Model:
                     batch_x = X_train[start:end,:,:,:]
                     batch_y = Y_train[start:end,:,:,:]
 
-                    _, l = self.sess.run([self.optimizer, self.loss], feed_dict={self.X: batch_x,
-                                                                                 self.Y: batch_y,
-                                                                                 self.global_step: epoch})
+                    feed = {self.X: batch_x, self.Y: batch_y}
 
-                    epoch_loss += l / num_batches
+                    _, l = self.sess.run([self.optimizer, self.loss], feed_dict=feed)
+
+                    epoch_train_loss += l / num_batches
+
+                lr = self.sess.run(self.lr)
 
                 if self.verbose:
-                    print('Epoch:', (epoch+1), 'loss =', epoch_loss)
+                    print('Epoch: {0}'.format(epoch+1))
+                    print('learning_rate =', lr)
+                    print('train_loss =', epoch_train_loss)
 
+                # Add training/validation epoch loss to train log.
                 if self.log:
-                    # Add training epoch loss to train log.
                     summary = tf.Summary()
-                    summary.value.add(tag='loss', simple_value=epoch_loss)
+                    summary.value.add(tag='loss', simple_value=epoch_train_loss)
                     train_writer.add_summary(summary, epoch)
                     train_writer.flush()
-
-                    # Add validation loss to val log.
                     summary = self.sess.run(merged,  feed_dict={self.X: X_val ,self.Y: Y_val})
                     val_writer.add_summary(summary, epoch)
                     val_writer.flush()
+
+                # Sample model (validate).
+                if self.validate and (epoch+1) % self.sample_interval == 0:
+                    X_pred = X_val[0:self.num_samples,:,:,:]
+                    samples = self.sample(X_pred)
+                    samples = np.concatenate([X_pred,samples], axis=3)
+                    save_lab_images(samples, filename="images/val_{}/epoch_" + str(epoch+1) + ".png")
 
                 # Save model.
                 if self.save and (epoch+1) % self.save_interval == 0:
@@ -147,10 +167,9 @@ class Model:
         self.saver.restore(self.sess, os.path.join(path, ckpt_name))
 
 
-    def predict(self, X):
-
+    def sample(self, X):
         if not self.compiled:
             print('Compile model first.')
             return
 
-        return self.sess.run(self.out, feed_dict={self.X: X})
+        return self.sess.run(self.sampler, feed_dict={self.X: X})
