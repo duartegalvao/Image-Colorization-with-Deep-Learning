@@ -1,4 +1,4 @@
-const NUM_SAMPLES = 100;
+const NUM_SAMPLES = 120;
 const SAVE_FILENAME = "tests.json";
 
 const TT_STATE = {
