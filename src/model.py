@@ -18,6 +18,9 @@ class Model:
         # Training settings.
         self.num_epochs = 250
         self.batch_size = 128
+        self.starter_learning_rate = 0.001
+        self.lr_decay_steps = 50
+        self.lr_decay_rate = 0.3
         self.shuffle = True
 
         self.learning_rate = 0.0003
