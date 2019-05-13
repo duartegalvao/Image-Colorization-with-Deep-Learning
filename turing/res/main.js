@@ -1,4 +1,4 @@
-const NUM_SAMPLES = 20;
+const NUM_SAMPLES = 100;
 const SAVE_FILENAME = "tests.json";
 
 const TT_STATE = {
@@ -95,15 +95,15 @@ class TuringTest {
 var turing_test = new TuringTest(NUM_SAMPLES);
 
 $(document).ready(function () {
-    turing_test.genTest();
-
     $(window).keydown(function(e) {
         let key = e.which;
         if (key === 37 || key === 65) { // left or A
+            $("#start-instruction").remove();
             turing_test.pickChoice(TT_CHOICE.LEFT);
             turing_test.genTest();
         }
         else if (key === 39 || key === 68) { // right or D
+            $("#start-instruction").remove();
             turing_test.pickChoice(TT_CHOICE.RIGHT);
             turing_test.genTest();
         }
