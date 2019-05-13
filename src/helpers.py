@@ -69,7 +69,7 @@ def _calculate_hue(rgb_images):
     return hues
 
 
-def _split_data_evenly(data, hue, ratio=0.1):
+def _split_data_evenly(data, hue, ratio):
     inv_ratio = np.round(1./ratio).astype(np.int)
     hue_order_idx = np.argsort(hue)
     data_sorted = data[hue_order_idx,:,:,:]
@@ -84,7 +84,7 @@ def _split_data_evenly(data, hue, ratio=0.1):
     return data_train, data_val
 
 
-def _preproc_CIFAR(seed):
+def _preproc_CIFAR(seed, ratio, smart_split):
     data = _load_batch('data_batch_1')
 
     for i in range(4):
@@ -97,14 +97,22 @@ def _preproc_CIFAR(seed):
     data = data.reshape((data.shape[0], 3, 32, 32)).transpose(0, 2, 3, 1)
     data_test = data_test.reshape((10000, 3, 32, 32)).transpose(0, 2, 3, 1)
 
-    hue = _calculate_hue(data)
-    data_train, data_val = _split_data_evenly(data, hue)
-
     np.random.seed(seed)
-    p_train = np.random.permutation(data_train.shape[0])
-    p_val = np.random.permutation(data_val.shape[0])
-    data_train = data_train[p_train, :]
-    data_val = data_val[p_val, :]
+
+    if smart_split:
+        hue = _calculate_hue(data)
+        data_train, data_val = _split_data_evenly(data, hue, ratio)
+
+        p_train = np.random.permutation(data_train.shape[0])
+        p_val = np.random.permutation(data_val.shape[0])
+        data_train = data_train[p_train,:,:,:]
+        data_val = data_val[p_val,:,:,:]
+    else:
+        p = np.random.permutation(data.shape[0])
+        data = data[p,:,:,:]
+        n_val = np.round(ratio * data.shape[0]).astype(np.int)
+        data_train = data[n_val:,:,:,:]
+        data_val = data[:n_val,:,:,:]
 
     X_train, Y_train = _split_luminosity_and_lab(data_train)
     X_val, Y_val = _split_luminosity_and_lab(data_val)
@@ -113,13 +121,13 @@ def _preproc_CIFAR(seed):
     return X_train, Y_train, X_val, Y_val, X_test, Y_test
 
 
-def load_CIFAR(seed, force=False):
+def load_CIFAR(seed, force=False, ratio=0.1, smart_split=True):
     if (not force) and _is_CIFAR_preprocd(seed):
         print("Found preprocessed data for seed={}.".format(seed))
         return _load_preprocd_CIFAR(seed)
     else:
         print("Found no preprocessed data. Pre-processing for seed={}.".format(seed))
-        cifar = _preproc_CIFAR(seed)
+        cifar = _preproc_CIFAR(seed, ratio, smart_split)
         _save_preprocd_CIFAR(cifar, seed)
         return cifar
 
