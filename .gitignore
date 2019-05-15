@@ -105,6 +105,8 @@ venv.bak/
 
 # data
 src/data
+src_VACGAN/data
+src_unet/data
 
 src/checkpoints
 src/logs
