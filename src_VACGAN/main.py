@@ -10,17 +10,17 @@ SEED = 26
 print('Loading dataset...')
 X_train, Y_train, labels_train, X_val, Y_val, labels_val, X_test, Y_test, labels_test = load_CIFAR(SEED, smart_split=False)
 
-X_train = X_train[0:1000,:,:,:]
-Y_train = Y_train[0:1000,:,:,:]
-labels_train = labels_train[0:1000, :]
-
-X_val = X_val[0:100,:,:,:]
-Y_val = Y_val[0:100,:,:,:]
-labels_val = labels_val[0:100, :]
-
-X_test = X_test[0:100,:,:,:]
-Y_test = Y_test[0:100,:,:,:]
-labels_test = labels_test[0:100, :]
+#X_train = X_train[0:1000,:,:,:]
+#Y_train = Y_train[0:1000,:,:,:]
+#labels_train = labels_train[0:1000, :]
+#
+#X_val = X_val[0:100,:,:,:]
+#Y_val = Y_val[0:100,:,:,:]
+#labels_val = labels_val[0:100, :]
+#
+#X_test = X_test[0:100,:,:,:]
+#Y_test = Y_test[0:100,:,:,:]
+#labels_test = labels_test[0:100, :]
 
 print('Train:')
 print('X_train:', X_train.shape)

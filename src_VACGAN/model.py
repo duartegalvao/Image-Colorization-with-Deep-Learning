@@ -167,10 +167,13 @@ class Model:
 
                     feed = {self.X: batch_x, self.Y: batch_y, self.labels: batch_labels}
 
+                    # VAC.
                     _, l_class, l_class_fake, l_class_real = self.sess.run([self.classifier_optimizer, self.classifier_loss, self.classifier_loss_fake, self.classifier_loss_real], feed_dict=feed)
 
+                    # Discriminator.
                     _, l_disc, l_disc_fake, l_disc_real = self.sess.run([self.disc_optimizer, self.disc_loss, self.disc_loss_fake, self.disc_loss_real], feed_dict=feed)
 
+                    # Generator.
                     _, l_gen, l_gen_gan, l_gen_l1 = self.sess.run([self.gen_optimizer, self.gen_loss, self.gen_loss_gan, self.gen_loss_l1], feed_dict=feed)
                     _, l_gen, l_gen_gan, l_gen_l1 = self.sess.run([self.gen_optimizer, self.gen_loss, self.gen_loss_gan, self.gen_loss_l1], feed_dict=feed)
 
@@ -196,7 +199,7 @@ class Model:
                     print('disc_loss =', epoch_disc_loss)
                     print('disc_fake_loss =', epoch_disc_fake_loss)
                     print('disc_real_loss =', epoch_disc_real_loss)
-                    print('classifier_loss =', epoch_disc_loss)
+                    print('classifier_loss =', epoch_classifier_loss)
                     print('classifier_fake_loss =', epoch_classifier_fake_loss)
                     print('classifier_real_loss =', epoch_classifier_real_loss, ' \n')
 
