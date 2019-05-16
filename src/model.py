@@ -98,6 +98,7 @@ class Model:
         # Sampler.
         gen_sample = Generator(self.seed, is_training=False)
         self.sampler = gen_sample.forward(self.X, reuse_vars=True)
+        self.MAE = tf.reduce_mean(tf.abs(self.Y - self.sampler))
 
         self.saver = tf.train.Saver()
 
@@ -208,3 +209,25 @@ class Model:
             return
 
         return self.sess.run(self.sampler, feed_dict={self.X: X})
+
+    def loss(self, X, Y):
+        if not self.compiled:
+            print('Compile model first.')
+            return
+
+        N = X.shape[0]
+        num_batches = int(N / self.batch_size)
+
+        loss = 0.0
+
+        for b in range(num_batches):
+            start = b * self.batch_size
+            end   = min(b * self.batch_size + self.batch_size, N)
+            batch_x = X[start:end,:,:,:]
+            batch_y = Y[start:end,:,:,:]
+
+            l = self.sess.run(self.MAE, feed_dict={self.X: batch_x, self.Y: batch_y})
+
+            loss += l / num_batches
+
+        return loss
