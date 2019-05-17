@@ -103,10 +103,6 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# data
-src/data
-src_VACGAN/data
-src_unet/data
-
-src/checkpoints
-src/logs
+data/
+checkpoints/
+logs/
