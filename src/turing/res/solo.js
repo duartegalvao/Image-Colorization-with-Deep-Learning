@@ -22,7 +22,7 @@ class TuringTest {
 
     genTest() {
         function get_img_src(img_id, is_ground_truth) {
-            let src = "/src/images/test_" + img_id + "/";
+            let src = "/images/test_" + img_id + "/";
             if (is_ground_truth)
                 src += "true_color";
             else
