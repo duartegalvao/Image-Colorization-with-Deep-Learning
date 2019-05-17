@@ -106,3 +106,4 @@ venv.bak/
 data/
 checkpoints/
 logs/
+images/
