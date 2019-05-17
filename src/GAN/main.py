@@ -8,7 +8,7 @@ from helpers import *
 SEED = 26
 
 print('Loading dataset...')
-X_train, Y_train, X_val, Y_val, X_test, Y_test = load_CIFAR(SEED)
+X_train, Y_train, X_val, Y_val, X_test, Y_test = load_CIFAR(SEED, smart_split=False, force=True)
 
 #X_train = X_train[0:5000,:,:,:]
 #Y_train = Y_train[0:5000,:,:,:]
@@ -57,7 +57,7 @@ with tf.Session() as sess:
     load_path = 'checkpoints/2019-05-13_17:31:38/'
     model.load(load_path)
 
-    num_samples = 1000
+    num_samples = 5000
     loss = model.loss(X_train[0:num_samples,:,:,:], Y_train[0:num_samples,:,:,1:3])
     print('Training set loss:', loss)
 
