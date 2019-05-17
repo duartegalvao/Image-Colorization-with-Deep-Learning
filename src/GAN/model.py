@@ -210,7 +210,7 @@ class Model:
 
         return self.sess.run(self.sampler, feed_dict={self.X: X})
 
-    def loss(self, X, Y):
+    def get_loss(self, X, Y):
         if not self.compiled:
             print('Compile model first.')
             return

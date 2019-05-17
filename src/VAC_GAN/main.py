@@ -64,13 +64,13 @@ with tf.Session() as sess:
     model.load(load_path)
 
     num_samples = 5000
-    loss = model.loss(X_train[0:num_samples,:,:,:], Y_train[0:num_samples,:,:,1:3])
+    loss = model.get_loss(X_train[0:num_samples,:,:,:], Y_train[0:num_samples,:,:,1:3])
     print('Training set loss:', loss)
 
-    loss = model.loss(X_val[0:num_samples,:,:,:], Y_val[0:num_samples,:,:,1:3])
+    loss = model.get_loss(X_val[0:num_samples,:,:,:], Y_val[0:num_samples,:,:,1:3])
     print('Validation set loss:', loss)
 
-    loss = model.loss(X_test[0:num_samples,:,:,:], Y_test[0:num_samples,:,:,1:3])
+    loss = model.get_loss(X_test[0:num_samples,:,:,:], Y_test[0:num_samples,:,:,1:3])
     print('Test set loss:', loss)
 
     # print('Predicting training set...')
