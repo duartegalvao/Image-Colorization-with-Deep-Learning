@@ -5,5 +5,5 @@ This is a project for the [DD2424 - Deep Learning in Data Science](https://www.k
 
 ## Group
 - Pedro Santos ([@PPSantos](https://github.com/ppsantos))
-- Raúl Lizano
+- Raúl Lizano ([@rsanchez15](https://github.com/rsanchez15))
 - Duarte Galvão ([@duartegalvao](https://github.com/duartegalvao))
