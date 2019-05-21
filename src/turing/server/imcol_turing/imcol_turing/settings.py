@@ -21,6 +21,7 @@ DEBUG = False
 # Application definition
 
 INSTALLED_APPS = [
+    'turing_tests.apps.TuringTestsConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
