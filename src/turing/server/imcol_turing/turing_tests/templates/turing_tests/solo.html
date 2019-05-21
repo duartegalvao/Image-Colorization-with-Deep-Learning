@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+    <title>Image Colorization Turing Test</title>
+  </head>
+  <body class="bg-dark text-light">
+    <div class="container" style="max-width: 100%">
+        <div class="row justify-content-center">
+            <div class="col-auto">
+                <p class="text-muted mt-5 text-center">
+                    Use T or F to choose whether the image is true or false (generated).
+                </p>
+                <p class="text-muted mb-5 mt-2 text-center">
+                    The tests will repeat indefinitely. You have completed <span id="num_tests">0</span> tests.
+                </p>
+            </div>
+        </div>
+        <div class="row" id="start-instruction">
+            <div class="col">
+                <h1 class="text-center">Press T or F keys to start.</h1>
+            </div>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col text-center">
+                <img src="" id="test_img" class="m-3 w-25" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script>
+        const URL_AJAX_SUBMIT = "{% url 'ajax-submit-test' %}";
+        const CSRF_TOKEN = "{{ csrf_token }}";
+    </script>
+    <script src="{% static '/turing_tests/solo.js'%}"></script>
+  </body>
+</html>
