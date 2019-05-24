@@ -8,11 +8,20 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from .stats import SetStatistics
 from .models import TuringTest
 
 
 def index_view(request):
     return render(request, 'turing_tests/solo.html')
+
+
+def stats_view(request):
+    return render(request, 'turing_tests/stats.html', context={
+        "unet": SetStatistics(1),
+        "gan": SetStatistics(2),
+        "vacgan": SetStatistics(3),
+    })
 
 
 @ratelimit(key='ip', rate='60/m')

@@ -1,25 +1,27 @@
+import numpy as np
+
 from .models import TuringTest
 
 
-def generate_statistics():
-    print("===== UNET =====")
-    generate_statistics_for_set(1)
-    print("===== GAN =====")
-    generate_statistics_for_set(2)
-    print("===== VAC+GAN =====")
-    generate_statistics_for_set(3)
+class SetStatistics:
+    def __init__(self, set_id):
+        data = TuringTest.objects.filter(set=set_id)
 
+        self.tp = data.filter(is_correct=True, is_true=True).count()
+        self.tn = data.filter(is_correct=True, is_true=False).count()
+        self.fp = data.filter(is_correct=False, is_true=False).count()
+        self.fn = data.filter(is_correct=False, is_true=True).count()
 
-def generate_statistics_for_set(set):
-    data = TuringTest.objects.filter(set=set)
+        self.correct_guesses = self.tp + self.tn
+        self.incorrect_guesses = self.fp + self.fn
+        self.total_guesses = self.correct_guesses + self.incorrect_guesses
 
-    correct_n = data.filter(is_correct=True).count()
-    incorrect_n = data.filter(is_correct=False).count()
-    success_rate = correct_n / (correct_n + incorrect_n)
+        self.accuracy = np.round(100. * self.correct_guesses / self.total_guesses, 2)
 
-    #time_mean = np.mean(ds['time'])
-    #time_std = np.std(ds['time'])
+        self.tpr = np.round(100. * self.tp / (self.tp + self.fn), 2)
+        self.tnr = np.round(100. * self.tn / (self.tn + self.fp), 2)
 
-    print("{} correct guesses, {} incorrect.".format(correct_n, incorrect_n))
-    print("Success rate: {}%".format(success_rate * 100))
-    #print("Mean time: {} ± {} ms".format(time_mean, time_std))
+        self.participants = data.values('ip_address').distinct().count()
+
+        #self.time_mean = np.round(np.mean(data.values('time')), 2)
+        #self.time_std = np.std(data.values('time'))
