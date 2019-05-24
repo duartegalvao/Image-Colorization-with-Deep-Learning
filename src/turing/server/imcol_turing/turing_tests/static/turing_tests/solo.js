@@ -68,13 +68,18 @@ class TuringTest {
             $.ajax({
                 type: "POST",
                 url: URL_AJAX_SUBMIT,
-                data: { csrfmiddlewaretoken: CSRF_TOKEN,
+                beforeSend: function(request) {
+                    request.setRequestHeader("X-CSRFToken", CSRF_TOKEN);
+                    },
+                processData: false,
+                data: JSON.stringify({
                         i: this.current_test.img_id,
                         si: this.current_test.set_id,
                         it: this.current_test.is_truth,
                         ic: this.current_test.is_truth === choice,
                         t: click_time - this.current_test.start_time
-                      },
+                      }),
+                contentType: "application/json; charset=utf-8",
                 success: function(data) {
                     if (data === "0") {
                         this_tt.genTest();

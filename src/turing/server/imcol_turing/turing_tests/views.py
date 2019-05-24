@@ -1,8 +1,12 @@
+import json
 from datetime import timedelta
 
-from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequest
 from django.shortcuts import render
 from ipware import get_client_ip
+from ratelimit.decorators import ratelimit
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 from .models import TuringTest
 
@@ -11,22 +15,28 @@ def index_view(request):
     return render(request, 'turing_tests/solo.html')
 
 
+@ratelimit(key='ip', rate='60/m')
+@api_view(['POST'])
 def ajax_submit_test(request):
-    if request.is_ajax() and request.method == 'POST':
+    was_limited = getattr(request, 'limited', False)
+    if was_limited:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    if request.is_ajax():
         test = TuringTest()
         try:
-            time = int(request.POST['t'])
+            time = request.data['t']
             if time < 1000:
-                return HttpResponse(str(1))
-            test.image = int(request.POST['i'])
-            test.set = int(request.POST['si'])
-            test.is_true = bool(request.POST['it'])
-            test.is_correct = bool(request.POST['ic'])
+                return Response(str(1), status=status.HTTP_200_OK)
+            test.image = request.data['i']
+            test.set = request.data['si']
+            test.is_true = request.data['it']
+            test.is_correct = request.data['ic']
             test.time = timedelta(milliseconds=time)
             test.ip_address, _ = get_client_ip(request)
             test.save()
-            return HttpResponse(str(0))
+            return Response(str(0), status=status.HTTP_200_OK)
         except KeyError or ValueError:
-            return HttpResponseBadRequest()
+            return Response(status=status.HTTP_400_BAD_REQUEST)
     else:
-        return HttpResponseForbidden()
+        return Response(status=status.HTTP_403_FORBIDDEN)
