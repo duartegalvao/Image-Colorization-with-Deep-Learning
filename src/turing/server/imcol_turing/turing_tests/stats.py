@@ -4,8 +4,11 @@ from .models import TuringTest
 
 
 class SetStatistics:
-    def __init__(self, set_id):
-        data = TuringTest.objects.filter(set=set_id)
+    def __init__(self, set_id=-1):
+        if set_id < 0:
+            data = TuringTest.objects
+        else:
+            data = TuringTest.objects.filter(set=set_id)
 
         self.tp = data.filter(is_correct=True, is_true=True).count()
         self.tn = data.filter(is_correct=True, is_true=False).count()

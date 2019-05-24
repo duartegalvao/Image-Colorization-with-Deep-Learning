@@ -21,6 +21,7 @@ def stats_view(request):
         "unet": SetStatistics(1),
         "gan": SetStatistics(2),
         "vacgan": SetStatistics(3),
+        "total": SetStatistics(),
     })
 
 

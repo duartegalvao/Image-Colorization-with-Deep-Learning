@@ -28,26 +28,30 @@
                             <th scope="col">UNET</th>
                             <th scope="col">GAN</th>
                             <th scope="col">VAC+GAN</th>
+                            <th scope="col">Total</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <th scope="row">Accuracy</th>
-                            <td>{{ unet.accuracy }}</td>
-                            <td>{{ gan.accuracy }}</td>
-                            <td>{{ vacgan.accuracy }}</td>
+                            <td>{{ unet.accuracy }}%</td>
+                            <td>{{ gan.accuracy }}%</td>
+                            <td>{{ vacgan.accuracy }}%</td>
+                            <td>{{ total.accuracy }}%</td>
                         </tr>
                         <tr>
                             <th scope="row">Correct guesses</th>
                             <td>{{ unet.correct_guesses }}</td>
                             <td>{{ gan.correct_guesses }}</td>
                             <td>{{ vacgan.correct_guesses }}</td>
+                            <td>{{ total.correct_guesses }}</td>
                         </tr>
                         <tr>
                             <th scope="row">Incorrect guesses</th>
                             <td>{{ unet.incorrect_guesses }}</td>
                             <td>{{ gan.incorrect_guesses }}</td>
                             <td>{{ vacgan.incorrect_guesses }}</td>
+                            <td>{{ total.incorrect_guesses }}</td>
                         </tr>
                         <tr>
                             <th scope="row">
@@ -106,30 +110,48 @@
                                     </table>
                                 </center>
                             </td>
+                            <td>
+                                <center>
+                                    <table>
+                                        <tr>
+                                            <td>{{ total.tp }}</td>
+                                            <td>{{ total.fn }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>{{ total.fp }}</td>
+                                            <td>{{ total.tn }}</td>
+                                        </tr>
+                                    </table>
+                                </center>
+                            </td>
                         </tr>
                         <tr>
                             <th scope="row">Total guesses</th>
                             <td>{{ unet.total_guesses }}</td>
                             <td>{{ gan.total_guesses }}</td>
                             <td>{{ vacgan.total_guesses }}</td>
+                            <td>{{ total.total_guesses }}</td>
                         </tr>
                         <tr>
                             <th scope="row"># of participants (distinct IPs)</th>
                             <td>{{ unet.participants }}</td>
                             <td>{{ gan.participants }}</td>
                             <td>{{ vacgan.participants }}</td>
+                            <td>{{ total.participants }}</td>
                         </tr>
                         <tr>
                             <th scope="row">True Positive Rate (Sensitivity)</th>
-                            <td>{{ unet.tpr }}</td>
-                            <td>{{ gan.tpr }}</td>
-                            <td>{{ vacgan.tpr }}</td>
+                            <td>{{ unet.tpr }}%</td>
+                            <td>{{ gan.tpr }}%</td>
+                            <td>{{ vacgan.tpr }}%</td>
+                            <td>{{ total.tpr }}%</td>
                         </tr>
                         <tr>
                             <th scope="row">True Negative Rate (Specificity)</th>
-                            <td>{{ unet.tnr }}</td>
-                            <td>{{ gan.tnr }}</td>
-                            <td>{{ vacgan.tnr }}</td>
+                            <td>{{ unet.tnr }}%</td>
+                            <td>{{ gan.tnr }}%</td>
+                            <td>{{ vacgan.tnr }}%</td>
+                            <td>{{ total.tnr }}%</td>
                         </tr>
                     </tbody>
                 </table>
