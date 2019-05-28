@@ -1,0 +1,5 @@
+django ~= 2.2.1
+django-ipware ~= 2.1.0
+djangorestframework ~= 3.9.4
+django-ratelimit ~= 2.0.0
+numpy ~= 1.14.6

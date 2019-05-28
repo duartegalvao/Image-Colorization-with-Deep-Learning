@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+    <title>Turing Tests Statistics</title>
+</head>
+<body class="bg-dark text-light">
+    <div class="container" style="max-width: 100%">
+        <div class="row justify-content-center">
+            <div class="col-auto">
+                <p class="text-muted mt-5 text-center">
+                    Turing Test Statistics
+                </p>
+            </div>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col text-center">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">&nbsp;</th>
+                            <th scope="col">UNET</th>
+                            <th scope="col">GAN</th>
+                            <th scope="col">VAC+GAN</th>
+                            <th scope="col">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">Accuracy</th>
+                            <td>{{ unet.accuracy }}%</td>
+                            <td>{{ gan.accuracy }}%</td>
+                            <td>{{ vacgan.accuracy }}%</td>
+                            <td>{{ total.accuracy }}%</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Correct guesses</th>
+                            <td>{{ unet.correct_guesses }}</td>
+                            <td>{{ gan.correct_guesses }}</td>
+                            <td>{{ vacgan.correct_guesses }}</td>
+                            <td>{{ total.correct_guesses }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Incorrect guesses</th>
+                            <td>{{ unet.incorrect_guesses }}</td>
+                            <td>{{ gan.incorrect_guesses }}</td>
+                            <td>{{ vacgan.incorrect_guesses }}</td>
+                            <td>{{ total.incorrect_guesses }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <center>
+                                    <table>
+                                        <tr>
+                                            <td>TP</td>
+                                            <td>FN</td>
+                                        </tr>
+                                        <tr>
+                                            <td>FP</td>
+                                            <td>TN</td>
+                                        </tr>
+                                    </table>
+                                </center>
+                            </th>
+                            <td>
+                                <center>
+                                    <table>
+                                        <tr>
+                                            <td>{{ unet.tp }}</td>
+                                            <td>{{ unet.fn }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>{{ unet.fp }}</td>
+                                            <td>{{ unet.tn }}</td>
+                                        </tr>
+                                    </table>
+                                </center>
+                            </td>
+                            <td>
+                                <center>
+                                    <table>
+                                        <tr>
+                                            <td>{{ gan.tp }}</td>
+                                            <td>{{ gan.fn }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>{{ gan.fp }}</td>
+                                            <td>{{ gan.tn }}</td>
+                                        </tr>
+                                    </table>
+                                </center>
+                            </td>
+                            <td>
+                                <center>
+                                    <table>
+                                        <tr>
+                                            <td>{{ vacgan.tp }}</td>
+                                            <td>{{ vacgan.fn }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>{{ vacgan.fp }}</td>
+                                            <td>{{ vacgan.tn }}</td>
+                                        </tr>
+                                    </table>
+                                </center>
+                            </td>
+                            <td>
+                                <center>
+                                    <table>
+                                        <tr>
+                                            <td>{{ total.tp }}</td>
+                                            <td>{{ total.fn }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>{{ total.fp }}</td>
+                                            <td>{{ total.tn }}</td>
+                                        </tr>
+                                    </table>
+                                </center>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Total guesses</th>
+                            <td>{{ unet.total_guesses }}</td>
+                            <td>{{ gan.total_guesses }}</td>
+                            <td>{{ vacgan.total_guesses }}</td>
+                            <td>{{ total.total_guesses }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row"># of participants (distinct IPs)</th>
+                            <td>{{ unet.participants }}</td>
+                            <td>{{ gan.participants }}</td>
+                            <td>{{ vacgan.participants }}</td>
+                            <td>{{ total.participants }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">True Positive Rate (Sensitivity)</th>
+                            <td>{{ unet.tpr }}%</td>
+                            <td>{{ gan.tpr }}%</td>
+                            <td>{{ vacgan.tpr }}%</td>
+                            <td>{{ total.tpr }}%</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">True Negative Rate (Specificity)</th>
+                            <td>{{ unet.tnr }}%</td>
+                            <td>{{ gan.tnr }}%</td>
+                            <td>{{ vacgan.tnr }}%</td>
+                            <td>{{ total.tnr }}%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+</body>
+</html>
